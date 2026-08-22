@@ -856,13 +856,32 @@ export function BookingPage() {
                   </div>
                 </div>
 
-                <div className="flex gap-2.5">
+                <div className="flex flex-wrap gap-2.5">
                   <Button
                     variant="secondary"
                     className="flex-1 rounded-full text-xs font-bold"
                     onClick={() => window.print()}
                   >
                     🖨️ Print E-Ticket
+                  </Button>
+                  <Button
+                    className="flex-1 rounded-full text-xs font-bold bg-[#25D366] hover:bg-[#20bd5a] text-white"
+                    onClick={() => {
+                      const text = encodeURIComponent(
+                        `✈️ *GlobeTrotter Confirmed E-Ticket & Pass*\n` +
+                        `👤 *Passenger:* ${currentUser?.name || 'Priyanka Lachhani'}\n` +
+                        `🎫 *Booking:* ${selectedBooking.title}\n` +
+                        `🔖 *PNR Reference:* ${pnrCode}\n` +
+                        `🛫 *Terminal:* T2 | *Gate:* 14B | *Seat:* ${selectedSeat}\n` +
+                        `🍽️ *Meal:* ${selectedMeal.split(' ')[0]} | *Baggage:* ${extraBaggage > 0 ? '20kg' : '15kg'}\n` +
+                        `✅ *Status:* Confirmed (Payment ID: ${razorpayPaymentId || 'pay_live_test'})\n\n` +
+                        `🔗 *Open Digital Boarding Pass:* ${window.location.origin}/booking`
+                      )
+                      window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank')
+                      notify('📲 E-Ticket formatted for WhatsApp dispatch!')
+                    }}
+                  >
+                    📲 WhatsApp Pass
                   </Button>
                   <Button
                     className="flex-1 rounded-full text-xs font-bold"
@@ -873,7 +892,7 @@ export function BookingPage() {
                       setCouponCode('')
                     }}
                   >
-                    Done & Return
+                    Done
                   </Button>
                 </div>
               </div>

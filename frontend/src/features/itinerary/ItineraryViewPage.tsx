@@ -51,13 +51,32 @@ export function ItineraryViewPage() {
 
           <Button
             size="sm"
-            icon={<Share2 size={15} />}
+            className="bg-[#25D366] hover:bg-[#20bd5a] text-white font-bold"
             onClick={() => {
-              navigator.clipboard?.writeText(`${window.location.origin}/shared/konkan-express`)
-              notify('Share link copied to clipboard!')
+              const text = encodeURIComponent(
+                `🗺️ *${data.trip.name}*\n` +
+                `📅 *Dates:* ${formatDateRange(data.trip.startDate, data.trip.endDate)}\n` +
+                `📍 *Route:* ${data.stops.map(s => data.cityForStop(s.id)?.name).filter(Boolean).join(' · ')}\n` +
+                `💰 *Budget:* ${formatCurrency(data.budget.total)} (${data.activities.length} Planned Activities)\n\n` +
+                `👉 *View Full Interactive Itinerary:* ${window.location.origin}/trips/${data.trip.id}/itinerary`
+              )
+              window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank')
+              notify('📲 WhatsApp trip invite created!')
             }}
           >
-            Share
+            📲 WhatsApp Invite
+          </Button>
+
+          <Button
+            size="sm"
+            variant="outline"
+            icon={<Share2 size={15} />}
+            onClick={() => {
+              navigator.clipboard?.writeText(`${window.location.origin}/trips/${data.trip.id}/itinerary`)
+              notify('Trip invite link copied to clipboard!')
+            }}
+          >
+            Copy Link
           </Button>
         </div>
       </div>
