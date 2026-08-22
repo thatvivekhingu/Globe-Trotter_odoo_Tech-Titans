@@ -144,18 +144,48 @@ function TopBar({ onMenu }: { onMenu: () => void }) {
 
 function Sidebar() {
   return (
-    <aside className="fixed inset-y-0 left-0 top-16 z-20 hidden w-60 flex-col justify-between border-r border-slate-200/80 bg-white/90 px-3 py-5 backdrop-blur-md lg:flex">
-      <div className="space-y-1.5">
-        <p className="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Main Navigation</p>
-        {primaryNavigation.map((item) => (
-          <SidebarLink key={item.label} {...item} />
-        ))}
-      </div>
+    <aside className="fixed inset-y-0 left-0 top-16 z-20 hidden w-60 h-[calc(100vh-4rem)] flex-col justify-between border-r border-slate-200/80 bg-white/95 px-3 py-4 backdrop-blur-md lg:flex overflow-y-auto scrollbar-thin">
+      <div className="space-y-4 pb-6">
+        {/* Core Planning */}
+        <div className="space-y-1">
+          <p className="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">Core Planning</p>
+          <SidebarLink label="Dashboard" to="/dashboard" icon={LayoutDashboard} />
+          <SidebarLink label="My Trips" to="/trips" icon={Map} />
+          <SidebarLink label="Curated Tours" to="/packages" icon={Flame} badge="Hot" />
+          <SidebarLink label="AI Planner" to="/recommendations" icon={Sparkles} badge="LLaMA" />
+        </div>
 
-      <div className="space-y-1.5 pt-4 border-t border-slate-200/80">
-        <p className="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Preferences</p>
-        <SidebarLink label="Profile" to="/profile" icon={UserCircle} />
-        <SidebarLink label="Settings & AI" to="/settings" icon={Settings} />
+        {/* Bookings & Services */}
+        <div className="space-y-1 pt-2 border-t border-slate-100">
+          <p className="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">Services & Bookings</p>
+          <SidebarLink label="Live Bookings" to="/booking" icon={Plane} badge="Live" />
+          <SidebarLink label="Visa Services" to="/visa" icon={Globe} badge="120+" />
+          <SidebarLink label="Forex & Insurance" to="/forex" icon={DollarSign} badge="RBI" />
+        </div>
+
+        {/* Enterprise & Finance */}
+        <div className="space-y-1 pt-2 border-t border-slate-100">
+          <p className="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">Enterprise & Finance</p>
+          <SidebarLink label="Odoo ERP Sync" to="/odoo" icon={Building2} badge="Odoo" />
+          <SidebarLink label="Analytics & KPIs" to="/analytics" icon={BarChart3} />
+          <SidebarLink label="Budget & Split" to="/trips/trip-konkan/budget" icon={WalletCards} />
+          <SidebarLink label="Pricing & Plans" to="/pricing" icon={CreditCard} />
+        </div>
+
+        {/* Utilities */}
+        <div className="space-y-1 pt-2 border-t border-slate-100">
+          <p className="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">Travel Utilities</p>
+          <SidebarLink label="Discover Cities" to="/discover/cities" icon={Compass} />
+          <SidebarLink label="Safety & Lingo" to="/safety" icon={Shield} />
+          <SidebarLink label="Packing & SOS" to="/packing" icon={CheckSquare} />
+        </div>
+
+        {/* Preferences */}
+        <div className="space-y-1 pt-2 border-t border-slate-100">
+          <p className="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">Account</p>
+          <SidebarLink label="Profile" to="/profile" icon={UserCircle} />
+          <SidebarLink label="Settings & AI" to="/settings" icon={Settings} />
+        </div>
       </div>
     </aside>
   )
