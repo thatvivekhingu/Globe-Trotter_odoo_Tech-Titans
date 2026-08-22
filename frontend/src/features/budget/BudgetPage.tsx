@@ -11,6 +11,7 @@ import { Card, MetricCard, SectionHeading } from '../../components/ui/Card'
 import { EmptyState } from '../../components/ui/Feedback'
 import { ProgressBar } from '../../components/ui/ProgressBar'
 import { ProportionBar } from '../../components/ui/ProportionBar'
+import { GroupSplitter } from './GroupSplitter'
 import type { ExpenseCategory } from '../../types/domain'
 
 const chartColors: Record<ExpenseCategory, string> = {
@@ -200,6 +201,9 @@ export function BudgetPage() {
           ) : null}
         </div>
       </Card>
+
+      {/* Group Trip Bill Splitter (Splitwise style) */}
+      <GroupSplitter />
 
       {/* Add Expense Modal */}
       {addExpenseOpen && (

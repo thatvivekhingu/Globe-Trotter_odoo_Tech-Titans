@@ -1,9 +1,10 @@
-import { Bell, Compass, LayoutDashboard, Map, Menu, Plus, Search, Settings, Sparkles, UserCircle, WalletCards } from 'lucide-react'
+import { Bell, CheckSquare, Compass, LayoutDashboard, Map, Menu, Plus, Search, Settings, Sparkles, UserCircle, WalletCards } from 'lucide-react'
 import { useState, type FormEvent, type ReactNode } from 'react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { useTripWise } from '../../state/useTripWise'
 import { Button, IconButton } from '../ui/Button'
 import { ImageWithFallback } from '../ui/ImageWithFallback'
+import { AiCopilotFloatingChat } from '../ai/AiCopilotFloatingChat'
 
 const primaryNavigation = [
   { label: 'Dashboard', to: '/dashboard', icon: LayoutDashboard },
@@ -11,6 +12,7 @@ const primaryNavigation = [
   { label: 'AI Plan', to: '/recommendations', icon: Sparkles },
   { label: 'Discover', to: '/discover/cities', icon: Compass },
   { label: 'Budget', to: '/trips/trip-konkan/budget', icon: WalletCards },
+  { label: 'Packing & SOS', to: '/packing', icon: CheckSquare },
 ]
 
 function isDiscoverPath(pathname: string) {
@@ -59,11 +61,11 @@ function TopBar({ onMenu }: { onMenu: () => void }) {
             <kbd className="hidden rounded border border-line px-1.5 py-0.5 text-[0.65rem] text-ink/40 lg:inline">⌘ K</kbd>
           </label>
         </form>
-        <div className="ml-auto flex items-center gap-1 sm:gap-2 md:ml-4">
-          <IconButton label="Notifications" size="sm"><Bell size={17} /></IconButton>
-          <NavLink to="/profile" className="flex items-center gap-2 rounded-full p-1 outline-none hover:bg-ink/5">
+        <div className="ml-auto flex items-center gap-2 md:ml-0">
+          <IconButton label="Notifications" size="sm" className="hidden sm:inline-flex"><Bell size={18} /></IconButton>
+          <NavLink to="/profile" className="flex items-center gap-2 rounded-control p-1 outline-none hover:bg-ink/5">
             <ImageWithFallback src={currentUser?.avatarUrl} alt="Profile portrait of Aarav Mehta" className="size-9 rounded-full object-cover" fallbackClassName="size-9 rounded-full" />
-            <span className="hidden pr-2 text-sm font-semibold text-ink sm:inline">{currentUser?.name.split(' ')[0] || 'Guest'}</span>
+            <span className="hidden text-xs font-semibold text-ink sm:inline">{currentUser?.name.split(' ')[0] || 'Account'}</span>
           </NavLink>
         </div>
       </div>
@@ -73,10 +75,10 @@ function TopBar({ onMenu }: { onMenu: () => void }) {
 
 function IconRail() {
   return (
-    <aside className="fixed bottom-0 left-0 top-[4.5rem] z-20 hidden w-[5.5rem] border-r border-line bg-parchment/80 px-3 py-6 lg:flex lg:flex-col lg:items-center">
-      <nav aria-label="Primary navigation" className="flex w-full flex-col items-center gap-2">
+    <aside aria-label="Primary navigation" className="fixed inset-y-0 left-0 top-[4.5rem] z-20 hidden w-[5.5rem] flex-col items-center justify-between border-r border-line bg-parchment/95 px-2 py-4 backdrop-blur-md lg:flex">
+      <div className="flex w-full flex-col items-center gap-2">
         {primaryNavigation.map((item) => <ShellNavLink key={item.label} {...item} />)}
-      </nav>
+      </div>
       <div className="mt-auto flex w-full flex-col items-center gap-2">
         <ShellNavLink label="Profile" to="/profile" icon={UserCircle} />
         <ShellNavLink label="Settings" to="/settings" icon={Settings} />
@@ -119,7 +121,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const location = useLocation()
 
   return (
-    <div className="min-h-screen bg-parchment text-ink">
+    <div className="min-h-screen bg-parchment text-ink relative">
       <TopBar onMenu={() => setDrawerOpen(true)} />
       <IconRail />
       <MobileDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
@@ -127,6 +129,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <div className="mx-auto min-w-0 max-w-[1500px] px-4 py-7 sm:px-6 sm:py-9 lg:px-8 xl:px-10">{children}</div>
       </main>
       <MobileTabBar />
+      <AiCopilotFloatingChat />
     </div>
   )
 }

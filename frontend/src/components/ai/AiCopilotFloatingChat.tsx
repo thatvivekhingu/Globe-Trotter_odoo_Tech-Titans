@@ -1,0 +1,252 @@
+import { useState, useRef, useEffect } from 'react'
+import { Bot, Send, Sparkles, Minimize2 } from 'lucide-react'
+
+interface ChatMessage {
+  id: string
+  sender: 'user' | 'ai'
+  text: string
+  timestamp: string
+}
+
+const initialMessages: ChatMessage[] = [
+  {
+    id: 'm1',
+    sender: 'ai',
+    text: 'Hello! I am your GlobeTrotter AI Travel Copilot 🧭. Ask me anything about destinations, budget saving tips, local food, or day-by-day packing suggestions!',
+    timestamp: 'Just now',
+  },
+]
+
+export function AiCopilotFloatingChat() {
+  const [open, setOpen] = useState(false)
+  const [messages, setMessages] = useState<ChatMessage[]>(initialMessages)
+  const [input, setInput] = useState('')
+  const [loading, setLoading] = useState(false)
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }
+
+  useEffect(() => {
+    if (open) scrollToBottom()
+  }, [messages, open])
+
+  const handleSend = async (textToSend?: string) => {
+    const query = (textToSend || input).trim()
+    if (!query || loading) return
+
+    const userMsg: ChatMessage = {
+      id: `u-${Date.now()}`,
+      sender: 'user',
+      text: query,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    }
+
+    setMessages((prev) => [...prev, userMsg])
+    setInput('')
+    setLoading(true)
+
+    const apiKey = import.meta.env.VITE_GEMINI_API_KEY || ''
+
+    if (apiKey) {
+      try {
+        const response = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [
+                {
+                  parts: [
+                    {
+                      text: `You are GlobeTrotter AI Copilot, an expert travel planner for Indian and international travel.
+Provide helpful, concise, constraint-aware travel advice in 2-3 bullet points or short paragraphs.
+User question: ${query}`,
+                    },
+                  ],
+                },
+              ],
+            }),
+          }
+        )
+        const data = await response.json()
+        const aiText = data.candidates?.[0]?.content?.parts?.[0]?.text
+        if (aiText) {
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: `ai-${Date.now()}`,
+              sender: 'ai',
+              text: aiText,
+              timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            },
+          ])
+          setLoading(false)
+          return
+        }
+      } catch (err) {
+        console.warn('Gemini API call failed, falling back to smart reply:', err)
+      }
+    }
+
+    // Smart Local Fallback Responses
+    setTimeout(() => {
+      let reply = `That is a wonderful travel question! For ${query.toLowerCase().includes('budget') ? 'saving money' : 'this journey'}, I recommend booking trains 15 days in advance, prioritizing authentic local dhabas/cafes over tourist traps, and packing a reusable water flask.`
+
+      if (query.toLowerCase().includes('goa')) {
+        reply = `🌴 For Goa: \n• South Goa (Palolem, Agonda) is ideal for peaceful sunsets and kayaking.\n• North Goa (Anjuna, Vagator) is great for flea markets and vibrant beach shacks.\n• Don't miss authentic Goan Fish Curry and Bebinca dessert!`
+      } else if (query.toLowerCase().includes('food') || query.toLowerCase().includes('eat')) {
+        reply = `🍲 Culinary Tip:\n• Always explore local morning breakfast spots (e.g. Farsan in Gujarat, Poha in Indore, Masala Dosa in Bengaluru).\n• Average food budget: ₹400 - ₹800 per person per day for authentic local meals.`
+      } else if (query.toLowerCase().includes('pack') || query.toLowerCase().includes('clothes')) {
+        reply = `🎒 Quick Packing Advice:\n• Always carry a 10,000mAh power bank, comfortable walking sneakers, and offline downloaded maps.\n• For hills: Carry 1 thermal layer + windcheater.`
+      }
+
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `ai-${Date.now()}`,
+          sender: 'ai',
+          text: reply,
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        },
+      ])
+      setLoading(false)
+    }, 600)
+  }
+
+  return (
+    <div className="fixed bottom-6 right-6 z-50">
+      {/* Floating Toggle Button */}
+      {!open && (
+        <button
+          onClick={() => setOpen(true)}
+          className="group relative flex items-center gap-2.5 px-5 py-3.5 bg-[#0F172A] hover:bg-[#1E293B] text-white rounded-full shadow-2xl transition-all duration-300 active:scale-95 border border-slate-700 hover:shadow-indigo-500/20"
+        >
+          <div className="size-6 rounded-full bg-[#B4F056] text-[#0F172A] flex items-center justify-center font-bold text-xs">
+            <Sparkles size={14} />
+          </div>
+          <span className="font-bold text-xs tracking-wide">AI Travel Copilot</span>
+          <span className="absolute -top-1 -right-1 size-3 rounded-full bg-[#10B981] animate-ping" />
+          <span className="absolute -top-1 -right-1 size-3 rounded-full bg-[#10B981]" />
+        </button>
+      )}
+
+      {/* Expanded Chat Window */}
+      {open && (
+        <div className="w-[360px] sm:w-[400px] h-[520px] bg-white rounded-3xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+          {/* Header */}
+          <div className="bg-[#0F172A] text-white px-5 py-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="size-8 rounded-xl bg-[#B4F056] text-[#0F172A] flex items-center justify-center shadow-xs">
+                <Bot size={18} />
+              </div>
+              <div>
+                <h4 className="font-display font-bold text-sm leading-tight flex items-center gap-1.5">
+                  GlobeTrotter Copilot
+                  <span className="text-[10px] bg-[#10B981]/20 text-[#B4F056] px-1.5 py-0.2 rounded-full font-bold">Online</span>
+                </h4>
+                <p className="text-[11px] text-slate-400">Powered by Gemini 1.5 Flash</p>
+              </div>
+            </div>
+            <button
+              onClick={() => setOpen(false)}
+              className="text-slate-400 hover:text-white p-1 rounded-lg transition-colors"
+            >
+              <Minimize2 size={16} />
+            </button>
+          </div>
+
+          {/* Messages Feed */}
+          <div className="flex-1 p-4 overflow-y-auto space-y-3.5 bg-[#F8FAFC]">
+            {messages.map((m) => (
+              <div
+                key={m.id}
+                className={`flex gap-2.5 ${m.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+              >
+                {m.sender === 'ai' && (
+                  <div className="size-7 rounded-full bg-[#0F172A] text-[#B4F056] flex items-center justify-center shrink-0 text-xs">
+                    <Sparkles size={12} />
+                  </div>
+                )}
+                <div
+                  className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-xs leading-relaxed ${
+                    m.sender === 'user'
+                      ? 'bg-[#4F46E5] text-white rounded-br-none shadow-xs'
+                      : 'bg-white text-slate-800 border border-slate-200 rounded-bl-none shadow-xs'
+                  }`}
+                >
+                  <p className="whitespace-pre-line">{m.text}</p>
+                  <span
+                    className={`block mt-1 text-[9px] text-right ${
+                      m.sender === 'user' ? 'text-indigo-200' : 'text-slate-400'
+                    }`}
+                  >
+                    {m.timestamp}
+                  </span>
+                </div>
+              </div>
+            ))}
+
+            {loading && (
+              <div className="flex items-center gap-2 text-xs text-slate-400">
+                <div className="size-2 rounded-full bg-[#4F46E5] animate-bounce" />
+                <div className="size-2 rounded-full bg-[#4F46E5] animate-bounce [animation-delay:0.2s]" />
+                <div className="size-2 rounded-full bg-[#4F46E5] animate-bounce [animation-delay:0.4s]" />
+                <span className="text-[11px] ml-1">Analyzing route...</span>
+              </div>
+            )}
+            <div ref={messagesEndRef} />
+          </div>
+
+          {/* Quick Prompt Chips */}
+          <div className="px-3 py-2 bg-white border-t border-slate-100 flex gap-1.5 overflow-x-auto text-[10px] hide-scrollbar">
+            <button
+              onClick={() => handleSend('Best food in Goa?')}
+              className="shrink-0 px-2.5 py-1 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors"
+            >
+              🍤 Best food in Goa?
+            </button>
+            <button
+              onClick={() => handleSend('How to save budget?')}
+              className="shrink-0 px-2.5 py-1 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors"
+            >
+              💰 Save travel budget?
+            </button>
+            <button
+              onClick={() => handleSend('Manali packing tips')}
+              className="shrink-0 px-2.5 py-1 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors"
+            >
+              ❄️ Manali packing tips
+            </button>
+          </div>
+
+          {/* Input Form */}
+          <form
+            onSubmit={(e) => {
+              e.preventDefault()
+              handleSend()
+            }}
+            className="p-3 bg-white border-t border-slate-200 flex gap-2"
+          >
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Ask anything about your trip..."
+              className="flex-1 px-4 py-2.5 rounded-full bg-slate-100 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#4F46E5]"
+            />
+            <button
+              type="submit"
+              disabled={loading || !input.trim()}
+              className="size-9 rounded-full bg-[#0F172A] hover:bg-slate-800 text-white flex items-center justify-center shrink-0 disabled:opacity-40 transition-all"
+            >
+              <Send size={14} />
+            </button>
+          </form>
+        </div>
+      )}
+    </div>
+  )
+}
