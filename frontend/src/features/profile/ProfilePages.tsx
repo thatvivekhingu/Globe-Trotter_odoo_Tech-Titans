@@ -119,22 +119,22 @@ export function ProfilePage() {
 
 export function SettingsPage() {
   const { notify } = useTripWise()
-  const [apiKey, setApiKey] = useState(() => localStorage.getItem('GLOBETROTTER_GEMINI_KEY') || '')
-  const [selectedModel, setSelectedModel] = useState(() => localStorage.getItem('GLOBETROTTER_GEMINI_MODEL') || 'gemini-1.5-flash')
+  const [groqKey, setGroqKey] = useState(() => localStorage.getItem('GLOBETROTTER_GROQ_KEY') || import.meta.env.VITE_GROQ_API_KEY || '')
+  const [selectedModel, setSelectedModel] = useState(() => localStorage.getItem('GLOBETROTTER_AI_MODEL') || 'openai/gpt-oss-120b')
   const [testing, setTesting] = useState(false)
   const [testResult, setTestResult] = useState<string | null>(null)
 
   function saveAiSettings(e: FormEvent) {
     e.preventDefault()
-    localStorage.setItem('GLOBETROTTER_GEMINI_KEY', apiKey.trim())
-    localStorage.setItem('GLOBETROTTER_GEMINI_MODEL', selectedModel)
-    notify('AI & LLM configuration saved!')
+    localStorage.setItem('GLOBETROTTER_GROQ_KEY', groqKey.trim())
+    localStorage.setItem('GLOBETROTTER_AI_MODEL', selectedModel)
+    notify('Groq LLaMA AI configuration saved!')
   }
 
   async function testLlmConnection() {
     setTesting(true)
     setTestResult(null)
-    const keyToTest = apiKey.trim() || import.meta.env.VITE_GEMINI_API_KEY || ''
+    const keyToTest = groqKey.trim()
     
     if (!keyToTest) {
       setTestResult('No API Key provided. GlobeTrotter will use the high-performance local AI fallback engine.')
@@ -143,23 +143,30 @@ export function SettingsPage() {
     }
 
     try {
-      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent?key=${keyToTest}`, {
+      const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${keyToTest}`,
+        },
         body: JSON.stringify({
-          contents: [{ parts: [{ text: 'Give a 1-sentence welcome message for GlobeTrotter travel platform.' }] }]
+          model: selectedModel,
+          messages: [
+            { role: 'user', content: 'Give a 1-sentence inspiring travel quote for GlobeTrotter.' }
+          ]
         })
       })
       const data = await res.json()
-      if (data?.candidates?.[0]?.content?.parts?.[0]?.text) {
-        setTestResult(`✅ Connected! Response: "${data.candidates[0].content.parts[0].text.trim()}"`)
-        notify('LLM Connection Successful!')
+      const content = data?.choices?.[0]?.message?.content
+      if (content) {
+        setTestResult(`✅ Connected to ${selectedModel}! Response: "${content.trim()}"`)
+        notify('Groq LLaMA Connection Successful!')
       } else if (data?.error?.message) {
-        setTestResult(`⚠️ ${data.error.message} (Using local fallback engine)`)
-        notify('API error, using local fallback', 'error')
+        setTestResult(`⚠️ ${data.error.message}`)
+        notify('API error', 'error')
       }
     } catch (err: any) {
-      setTestResult(`⚠️ Connection failed (${err.message}). Using local AI fallback.`)
+      setTestResult(`⚠️ Connection failed (${err.message}).`)
     } finally {
       setTesting(false)
     }
@@ -167,7 +174,7 @@ export function SettingsPage() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-8">
-      <SectionHeading eyebrow="Make it yours" title="Settings & AI Model" description="Configure your AI Travel models, API keys, and platform preferences." />
+      <SectionHeading eyebrow="Make it yours" title="Settings & AI Model" description="Configure your Groq LLaMA models, API keys, and platform preferences." />
       
       {/* AI & LLM Engine Settings Card */}
       <Card>
@@ -181,7 +188,7 @@ export function SettingsPage() {
                 <h2 className="font-display text-2xl text-ink">LLM Model & AI Engine</h2>
                 <Badge tone="clay">{selectedModel}</Badge>
               </div>
-              <p className="body-copy mt-1 text-sm">Choose the Large Language Model that powers your itineraries and AI Copilot chat.</p>
+              <p className="body-copy mt-1 text-sm">Powered by high-speed Groq LPU inference for instant itineraries and AI Copilot responses.</p>
             </div>
           </div>
 
@@ -193,23 +200,23 @@ export function SettingsPage() {
                 onChange={(e) => setSelectedModel(e.target.value)}
                 className="w-full px-3.5 py-2.5 rounded-xl border border-line bg-white text-sm font-medium"
               >
-                <option value="gemini-1.5-flash">Google Gemini 1.5 Flash (Fast & Cost-Efficient · Recommended)</option>
-                <option value="gemini-2.0-flash">Google Gemini 2.0 Flash (Next-Gen Multimodal)</option>
-                <option value="gemini-1.5-pro">Google Gemini 1.5 Pro (Deep Reasoning & Complex Routes)</option>
+                <option value="openai/gpt-oss-120b">Groq GPT-OSS 120B / LLaMA Architecture (Sub-second · Recommended)</option>
+                <option value="qwen/qwen3.6-27b">Groq Qwen 3.6 27B (High-Precision Reasoning)</option>
+                <option value="openai/gpt-oss-20b">Groq GPT-OSS 20B (Ultra-Lightweight & Fast)</option>
                 <option value="local-engine">GlobeTrotter Neural Deterministic Engine (Offline / Local)</option>
               </select>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-ink/70 mb-1">Google Gemini API Key</label>
+              <label className="block text-xs font-semibold text-ink/70 mb-1">Groq API Key</label>
               <input
                 type="password"
-                value={apiKey}
-                onChange={(e) => setApiKey(e.target.value)}
-                placeholder="AIzaSy..."
+                value={groqKey}
+                onChange={(e) => setGroqKey(e.target.value)}
+                placeholder="gsk_..."
                 className="w-full px-3.5 py-2.5 rounded-xl border border-line bg-white text-sm font-mono"
               />
-              <p className="mt-1 text-[11px] text-ink/50">Get a free key at <a href="https://aistudio.google.com/" target="_blank" rel="noreferrer" className="text-[#4F46E5] underline">Google AI Studio</a>. If blank or invalid, the platform automatically switches to our deterministic AI engine.</p>
+              <p className="mt-1 text-[11px] text-ink/50">Groq API Key configured for ultra-fast LPU inference (500+ tokens/sec).</p>
             </div>
 
             {testResult && (

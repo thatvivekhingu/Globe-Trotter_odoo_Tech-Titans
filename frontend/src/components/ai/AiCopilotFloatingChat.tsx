@@ -47,33 +47,30 @@ export function AiCopilotFloatingChat() {
     setInput('')
     setLoading(true)
 
-    const apiKey = localStorage.getItem('GLOBETROTTER_GEMINI_KEY') || import.meta.env.VITE_GEMINI_API_KEY || ''
-    const selectedModel = localStorage.getItem('GLOBETROTTER_GEMINI_MODEL') || 'gemini-1.5-flash'
+    const groqKey = localStorage.getItem('GLOBETROTTER_GROQ_KEY') || import.meta.env.VITE_GROQ_API_KEY || ''
+    const selectedModel = localStorage.getItem('GLOBETROTTER_AI_MODEL') || 'openai/gpt-oss-120b'
 
-    if (apiKey && selectedModel !== 'local-engine') {
+    if (groqKey && selectedModel !== 'local-engine') {
       try {
-        const response = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent?key=${apiKey}`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              contents: [
-                {
-                  parts: [
-                    {
-                      text: `You are GlobeTrotter AI Copilot, an expert travel planner for Indian and international travel.
-Provide helpful, concise, constraint-aware travel advice in 2-3 bullet points or short paragraphs.
-User question: ${query}`,
-                    },
-                  ],
-                },
-              ],
-            }),
-          }
-        )
+        const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${groqKey}`,
+          },
+          body: JSON.stringify({
+            model: selectedModel,
+            messages: [
+              {
+                role: 'system',
+                content: 'You are GlobeTrotter AI Copilot, an expert travel planner. Provide helpful, concise, practical travel advice in 2-3 short bullet points.',
+              },
+              { role: 'user', content: query },
+            ],
+          }),
+        })
         const data = await response.json()
-        const aiText = data.candidates?.[0]?.content?.parts?.[0]?.text
+        const aiText = data?.choices?.[0]?.message?.content
         if (aiText) {
           setMessages((prev) => [
             ...prev,
@@ -88,7 +85,7 @@ User question: ${query}`,
           return
         }
       } catch (err) {
-        console.warn('Gemini API call failed, falling back to smart reply:', err)
+        console.warn('Groq LLaMA API call failed, falling back to smart reply:', err)
       }
     }
 

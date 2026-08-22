@@ -52,15 +52,15 @@ export function SmartRecommendationPage() {
     const numDays = Math.max(2, parseInt(days, 10) || 5)
     const numBudget = Math.max(5000, parseInt(budget, 10) || 30000)
 
-    // Check configured model and API key
-    const apiKey = localStorage.getItem('GLOBETROTTER_GEMINI_KEY') || import.meta.env.VITE_GEMINI_API_KEY || ''
-    const selectedModel = localStorage.getItem('GLOBETROTTER_GEMINI_MODEL') || 'gemini-1.5-flash'
+    // Check configured Groq / Gemini model and API key
+    const groqKey = localStorage.getItem('GLOBETROTTER_GROQ_KEY') || import.meta.env.VITE_GROQ_API_KEY || ''
+    const selectedModel = localStorage.getItem('GLOBETROTTER_AI_MODEL') || 'openai/gpt-oss-120b'
 
-    if (apiKey && selectedModel !== 'local-engine') {
+    if (groqKey && selectedModel !== 'local-engine') {
       try {
         const prompt = `Recommend a multi-city travel itinerary in India starting from ${originCity} for ${numDays} days with a total budget of ₹${numBudget}.
 Travel style: ${travelStyle}, Interest: ${interest}, Destination Type: ${destinationType}.
-Return strict JSON with this structure:
+Return strict JSON with this exact schema:
 {
   "title": "string",
   "summary": "string",
@@ -82,24 +82,32 @@ Return strict JSON with this structure:
   },
   "totalEstimatedCost": number
 }`
-        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent?key=${apiKey}`, {
+        const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${groqKey}`,
+          },
           body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: { responseMimeType: 'application/json' }
-          })
+            model: selectedModel,
+            response_format: { type: 'json_object' },
+            messages: [
+              { role: 'system', content: 'You are GlobeTrotter AI Travel Architect. Respond with valid JSON only.' },
+              { role: 'user', content: prompt },
+            ],
+          }),
         })
         const data = await res.json()
-        if (data?.candidates?.[0]?.content?.parts?.[0]?.text) {
-          const parsed = JSON.parse(data.candidates[0].content.parts[0].text)
+        const content = data?.choices?.[0]?.message?.content
+        if (content) {
+          const parsed = JSON.parse(content)
           setResult(parsed)
           notify(`AI recommendations generated using ${selectedModel}!`)
           setLoading(false)
           return
         }
       } catch (err) {
-        console.warn('Gemini API call failed, falling back to smart algorithm:', err)
+        console.warn('Groq LLaMA API call failed, falling back to deterministic algorithm:', err)
       }
     }
 

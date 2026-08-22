@@ -23,37 +23,37 @@ class ChatRequest(BaseModel):
     trip_context: str | None = None
 
 
-def call_gemini_api(prompt: str) -> str | None:
-    api_key = settings.gemini_api_key
+def call_groq_llm(prompt: str, json_mode: bool = False) -> str | None:
+    api_key = settings.groq_api_key
     if not api_key:
         return None
 
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/{settings.gemini_model}:generateContent?key={api_key}"
+    url = "https://api.groq.com/openai/v1/chat/completions"
     payload = {
-        "contents": [
-            {
-                "parts": [
-                    {"text": prompt}
-                ]
-            }
+        "model": settings.groq_model,
+        "messages": [
+            {"role": "system", "content": "You are GlobeTrotter AI, an expert travel architect." + (" Output valid JSON only." if json_mode else "")},
+            {"role": "user", "content": prompt}
         ],
-        "generationConfig": {
-            "temperature": 0.7,
-            "maxOutputTokens": 2048,
-        }
+        "temperature": 0.6,
     }
+    if json_mode:
+        payload["response_format"] = {"type": "json_object"}
 
     try:
         req = urllib.request.Request(
             url,
             data=json.dumps(payload).encode('utf-8'),
-            headers={'Content-Type': 'application/json'}
+            headers={
+                'Content-Type': 'application/json',
+                'Authorization': f'Bearer {api_key}'
+            }
         )
         with urllib.request.urlopen(req, timeout=12) as response:
             res_data = json.loads(response.read().decode('utf-8'))
-            return res_data['candidates'][0]['content']['parts'][0]['text']
+            return res_data['choices'][0]['message']['content']
     except Exception as e:
-        print(f"[Gemini API Error] {e}")
+        print(f"[Groq LLM Error] {e}")
         return None
 
 
@@ -98,7 +98,7 @@ Return ONLY a valid JSON object (no markdown, no backticks) with this structure:
   "proTips": ["Tip 1", "Tip 2"]
 }}
 """
-    raw_response = call_gemini_api(prompt)
+    raw_response = call_groq_llm(prompt, json_mode=True)
     if raw_response:
         cleaned = raw_response.strip()
         if cleaned.startswith('```json'):
@@ -174,7 +174,7 @@ Return ONLY a valid JSON object (no markdown, no backticks) with this structure:
 @router.post('/chat')
 def chat_copilot(req: ChatRequest) -> dict[str, str]:
     """
-    AI Travel Copilot chat endpoint powered by Gemini 1.5 Flash.
+    AI Travel Copilot chat endpoint powered by Groq LLaMA / GPT-OSS 120B.
     """
     prompt = f"""
 You are GlobeTrotter AI Copilot, a helpful and knowledgeable travel assistant.
@@ -183,7 +183,7 @@ User question: {req.message}
 
 Respond concisely and practically with friendly travel guidance in 2-3 short bullet points or sentences.
 """
-    reply = call_gemini_api(prompt)
+    reply = call_groq_llm(prompt)
     if not reply:
         reply = "I recommend booking transport early, trying local breakfast specialties, and keeping a buffer for unexpected scenic detours!"
 
