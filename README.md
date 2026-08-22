@@ -25,6 +25,9 @@ GlobeTrotter was built from the ground up to solve the 5 biggest pain points in 
 | **Corporate ERP Sync** | ❌ Manual invoice PDF | ❌ Manual PDF | ❌ None | ✅ **1-Click Odoo ERP HR & GST Claim Sync** |
 | **Voice AI Copilot** | ❌ Text-only bot | ❌ None | ❌ None | ✅ **Bilingual Speech Engine (Hindi + English)** |
 | **Live API Integrations** | ❌ Closed proprietary data | ❌ Closed data | ❌ Static data | ✅ **Live Open-Meteo Weather + OpenExchange Forex** |
+=======
+**GlobeTrotter** is an all-in-one AI travel planning, live booking aggregator, and corporate expense platform integrated with Odoo ERP. Designed to outperform traditional OTA platforms like MakeMyTrip, Goibibo, and TripAdvisor, GlobeTrotter introduces zero convenience fees, dynamic AI itinerary generation, in-browser neural bill scanning, and seamless B2B corporate accounting.
+>>>>>>> ff55fb6 (docs(readme): clean collaborator and team references from project readme)
 
 ---
 
@@ -94,16 +97,6 @@ graph TD
 
 ---
 
-## 👥 Core Project Collaborators (Tech Titans)
-
-| Collaborator Name | GitHub Username | Role & Key Contributions |
-|---|---|---|
-| **Preet Kothadia** | [`okpreet`](https://github.com/okpreet) | Lead Frontend Architect, React 19 Lazy Code Splitting, Real Live APIs Integration (Weather/Forex), WebAssembly OCR Scanner & Performance Optimization |
-| **Vivek Hingu** | [`thatvivekhingu`](https://github.com/thatvivekhingu) | Lead Full-Stack Engineer, Odoo ERP REST/XML-RPC Integration, Corporate Tax Shield, Custom Logo Emblem & UI Polish |
-| **Priyanka Lachhani** | [`Priyanka09y`](https://github.com/Priyanka09y) | Growth & Utility Engineer, WhatsApp E-Ticket Dispatch, Trip Invitation Loop & PDF Certificate Generators |
-
----
-
 ## 🚀 Quick Start & Local Setup
 
 ### Prerequisites
@@ -133,4 +126,4 @@ npx vite build
 ---
 
 ## 📄 License
-This project is licensed under the **MIT License** — developed for Hackathons & Enterprise Operations by **Tech Titans**.
+This project is licensed under the **MIT License** — developed for Hackathons & Enterprise Operations.
