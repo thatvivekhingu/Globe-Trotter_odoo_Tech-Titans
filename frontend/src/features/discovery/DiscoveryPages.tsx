@@ -62,12 +62,32 @@ export function ActivitySearchPage() {
   const [query, setQuery] = useState('')
   const [cityId, setCityId] = useState('all')
   const [category, setCategory] = useState('all')
+  const [costFilter, setCostFilter] = useState('all')
+  const [durationFilter, setDurationFilter] = useState('all')
   const selectedTrip = selectTrip(state.db, state.selectedTripId)
   const selectedTripActivities = state.db.tripActivities.filter((activity) => activity.tripId === selectedTrip?.id)
+
   const results = useMemo(() => state.db.activities.filter((activity) => {
     const normalizedQuery = query.trim().toLowerCase()
-    return (!normalizedQuery || `${activity.name} ${activity.description}`.toLowerCase().includes(normalizedQuery)) && (cityId === 'all' || activity.cityId === cityId) && (category === 'all' || activity.category === category)
-  }), [category, cityId, query, state.db.activities])
+    const matchesQuery = !normalizedQuery || `${activity.name} ${activity.description}`.toLowerCase().includes(normalizedQuery)
+    const matchesCity = cityId === 'all' || activity.cityId === cityId
+    const matchesCategory = category === 'all' || activity.category === category
+
+    let matchesCost = true
+    if (costFilter === 'free') matchesCost = activity.defaultCost === 0
+    else if (costFilter === 'under-500') matchesCost = activity.defaultCost > 0 && activity.defaultCost <= 500
+    else if (costFilter === '500-1500') matchesCost = activity.defaultCost > 500 && activity.defaultCost <= 1500
+    else if (costFilter === 'above-1500') matchesCost = activity.defaultCost > 1500
+
+    let matchesDuration = true
+    if (durationFilter === 'short') matchesDuration = activity.durationMinutes <= 60
+    else if (durationFilter === 'medium') matchesDuration = activity.durationMinutes > 60 && activity.durationMinutes <= 120
+    else if (durationFilter === 'long') matchesDuration = activity.durationMinutes > 120 && activity.durationMinutes <= 240
+    else if (durationFilter === 'full') matchesDuration = activity.durationMinutes > 240
+
+    return matchesQuery && matchesCity && matchesCategory && matchesCost && matchesDuration
+  }), [category, cityId, costFilter, durationFilter, query, state.db.activities])
+
   const categories = [...new Set(state.db.activities.map((activity) => activity.category))]
 
   function addActivity(activityId: string) {
@@ -91,12 +111,34 @@ export function ActivitySearchPage() {
     notify('Activity added to your itinerary.')
   }
 
+  const hasFilters = Boolean(query || cityId !== 'all' || category !== 'all' || costFilter !== 'all' || durationFilter !== 'all')
+
+  const resetFilters = () => {
+    setQuery('')
+    setCityId('all')
+    setCategory('all')
+    setCostFilter('all')
+    setDurationFilter('all')
+  }
+
   return (
     <div className="space-y-8">
-      <SectionHeading eyebrow="Fill the days well" title="Activity discovery" description="Choose a few anchors for each day. The rest of the route can stay open." action={<Link to="/discover/cities" className="inline-flex items-center gap-2 text-sm font-semibold text-clay hover:text-ink">Explore cities <ArrowRight size={16} /></Link>} />
-      <DiscoveryToolbar query={query} onQueryChange={setQuery} queryPlaceholder="Search experiences, food, and culture" filters={[{ label: 'City', value: cityId, onChange: setCityId, options: [{ value: 'all', label: 'All cities' }, ...state.db.cities.map((city) => ({ value: city.id, label: city.name }))] }, { label: 'Category', value: category, onChange: setCategory, options: [{ value: 'all', label: 'All categories' }, ...categories.map((item) => ({ value: item, label: formatCategoryLabel(item) }))] }]} onReset={() => { setQuery(''); setCityId('all'); setCategory('all') }} hasFilters={Boolean(query || cityId !== 'all' || category !== 'all')} />
+      <SectionHeading eyebrow="Fill the days well" title="Activity discovery" description="Choose a few anchors for each day. Filter by interest, budget, or duration." action={<Link to="/discover/cities" className="inline-flex items-center gap-2 text-sm font-semibold text-clay hover:text-ink">Explore cities <ArrowRight size={16} /></Link>} />
+      <DiscoveryToolbar
+        query={query}
+        onQueryChange={setQuery}
+        queryPlaceholder="Search experiences, food, and culture"
+        filters={[
+          { label: 'City', value: cityId, onChange: setCityId, options: [{ value: 'all', label: 'All cities' }, ...state.db.cities.map((city) => ({ value: city.id, label: city.name }))] },
+          { label: 'Category', value: category, onChange: setCategory, options: [{ value: 'all', label: 'All categories' }, ...categories.map((item) => ({ value: item, label: formatCategoryLabel(item) }))] },
+          { label: 'Cost', value: costFilter, onChange: setCostFilter, options: [{ value: 'all', label: 'All costs' }, { value: 'free', label: 'Free (₹0)' }, { value: 'under-500', label: 'Under ₹500' }, { value: '500-1500', label: '₹500 - ₹1,500' }, { value: 'above-1500', label: '₹1,500+' }] },
+          { label: 'Duration', value: durationFilter, onChange: setDurationFilter, options: [{ value: 'all', label: 'All durations' }, { value: 'short', label: 'Under 1 hour' }, { value: 'medium', label: '1 - 2 hours' }, { value: 'long', label: '2 - 4 hours' }, { value: 'full', label: 'Half-day+ (4h+)' }] },
+        ]}
+        onReset={resetFilters}
+        hasFilters={hasFilters}
+      />
       <div className="columns-1 gap-5 sm:columns-2 xl:columns-3">{results.map((activity) => <ActivityResultCard key={activity.id} activity={activity} city={state.db.cities.find((city) => city.id === activity.cityId)} added={selectedTripActivities.some((item) => item.activityId === activity.id)} onAdd={() => addActivity(activity.id)} />)}</div>
-      {!results.length ? <EmptyState icon={<Utensils size={28} />} title="No activities found" description="Try a different search or reset the filters to see more ways to spend the day." action={<Button variant="secondary" onClick={() => { setQuery(''); setCityId('all'); setCategory('all') }}>Clear filters</Button>} /> : null}
+      {!results.length ? <EmptyState icon={<Utensils size={28} />} title="No activities found" description="Try adjusting your cost, category, or duration filters to see more options." action={<Button variant="secondary" onClick={resetFilters}>Clear filters</Button>} /> : null}
       <div className="rounded-card border border-clay/20 bg-clay/5 p-5 text-sm text-ink/65"><div className="flex items-start gap-3"><Ticket size={18} className="mt-0.5 shrink-0 text-clay" /><p><span className="font-semibold text-ink">A gentle rule of thumb:</span> plan one or two anchors per day, then leave some space for the places you find by accident.</p></div></div>
     </div>
   )

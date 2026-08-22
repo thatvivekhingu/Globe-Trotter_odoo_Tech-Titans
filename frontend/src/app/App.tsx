@@ -16,6 +16,7 @@ import { BudgetPage } from '../features/budget/BudgetPage'
 import { CalendarPage } from '../features/calendar/CalendarPage'
 import { SharedItineraryPage } from '../features/sharing/SharedItineraryPage'
 import { ProfilePage, SettingsPage } from '../features/profile/ProfilePages'
+import { SmartRecommendationPage } from '../features/ai/SmartRecommendationPage'
 import { Card } from '../components/ui/Card'
 import { Button } from '../components/ui/Button'
 import { Link } from 'react-router-dom'
@@ -68,6 +69,8 @@ function AppRoutes() {
           <Route path="/trips/:tripId/calendar" element={<CalendarPage />} />
           <Route path="/discover/cities" element={<CitySearchPage />} />
           <Route path="/discover/activities" element={<ActivitySearchPage />} />
+          <Route path="/recommendations" element={<SmartRecommendationPage />} />
+          <Route path="/plan" element={<SmartRecommendationPage />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/settings" element={<SettingsPage />} />
         </Route>

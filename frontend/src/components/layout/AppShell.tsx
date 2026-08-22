@@ -1,4 +1,4 @@
-import { Bell, Compass, LayoutDashboard, Map, Menu, Plus, Search, Settings, UserCircle, WalletCards } from 'lucide-react'
+import { Bell, Compass, LayoutDashboard, Map, Menu, Plus, Search, Settings, Sparkles, UserCircle, WalletCards } from 'lucide-react'
 import { useState, type FormEvent, type ReactNode } from 'react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { useTripWise } from '../../state/useTripWise'
@@ -8,6 +8,7 @@ import { ImageWithFallback } from '../ui/ImageWithFallback'
 const primaryNavigation = [
   { label: 'Dashboard', to: '/dashboard', icon: LayoutDashboard },
   { label: 'My trips', to: '/trips', icon: Map },
+  { label: 'AI Plan', to: '/recommendations', icon: Sparkles },
   { label: 'Discover', to: '/discover/cities', icon: Compass },
   { label: 'Budget', to: '/trips/trip-konkan/budget', icon: WalletCards },
 ]
