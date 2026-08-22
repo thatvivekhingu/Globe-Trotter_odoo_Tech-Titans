@@ -149,11 +149,5 @@ npx vite build
 
 ---
 
-## 👤 Author Attribution
-
-Developed & Maintained by **okpreet** ([preetkothadia111@gmail.com](mailto:preetkothadia111@gmail.com)) for **GlobeTrotter / Tech Titans**.
-
----
-
 ## 📄 License
 This project is licensed under the **MIT License** — feel free to use and customize!
