@@ -138,10 +138,36 @@ export function ForexAndInsurancePage() {
   const { notify } = useTripWise()
   const [activeTab, setActiveTab] = useState<'insurance' | 'forex'>('insurance')
   
-  // Forex State
+  // Forex State with Live Rates
   const [selectedCurrency, setSelectedCurrency] = useState<string>('USD')
   const [forexAmount, setForexAmount] = useState<number>(1000)
   const [pincode, setPincode] = useState<string>('110001')
+  const [liveRates, setLiveRates] = useState<Record<string, number>>({})
+
+  // Fetch real live currency rates
+  useEffect(() => {
+    fetch('https://open.er-api.com/v6/latest/USD')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.rates?.INR) {
+          const usdInr = data.rates.INR
+          const eurInr = usdInr / (data.rates.EUR || 0.92)
+          const gbpInr = usdInr / (data.rates.GBP || 0.78)
+          const aedInr = usdInr / (data.rates.AED || 3.67)
+          const thbInr = usdInr / (data.rates.THB || 35.5)
+          const sgdInr = usdInr / (data.rates.SGD || 1.34)
+          setLiveRates({
+            USD: Number(usdInr.toFixed(2)),
+            EUR: Number(eurInr.toFixed(2)),
+            GBP: Number(gbpInr.toFixed(2)),
+            AED: Number(aedInr.toFixed(2)),
+            THB: Number(thbInr.toFixed(2)),
+            SGD: Number(sgdInr.toFixed(2)),
+          })
+        }
+      })
+      .catch(() => undefined)
+  }, [])
 
   // Insurance Form State
   const [destCountry, setDestCountry] = useState('Thailand')
@@ -159,7 +185,7 @@ export function ForexAndInsurancePage() {
   const [activePolicy, setActivePolicy] = useState<InsurancePlan | null>(null)
   const [policyConfirmed, setPolicyConfirmed] = useState(false)
 
-  const currentRate = FOREX_RATES.find((r) => r.code === selectedCurrency)?.buyRate || 92.74
+  const currentRate = liveRates[selectedCurrency] || FOREX_RATES.find((r) => r.code === selectedCurrency)?.buyRate || 92.74
   const calculatedInr = Math.round(forexAmount * currentRate)
 
   const filteredPlans = MMT_INSURANCE_PLANS.filter((p) => {
