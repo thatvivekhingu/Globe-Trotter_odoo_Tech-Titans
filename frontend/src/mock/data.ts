@@ -46,6 +46,8 @@ export const seedCities: City[] = [
     costIndex: 'medium',
     imageUrl: imageAssets.espresso,
     imageAlt: 'A vintage espresso cup on a marble table, Grace Hazell on Unsplash',
+    lat: 23.0225,
+    lng: 72.5714,
   },
   {
     id: 'city-mumbai',
@@ -56,6 +58,8 @@ export const seedCities: City[] = [
     costIndex: 'high',
     imageUrl: imageAssets.seville,
     imageAlt: 'Intricate Moorish architecture, Klaus Kreuer on Unsplash',
+    lat: 19.0760,
+    lng: 72.8777,
   },
   {
     id: 'city-goa',
@@ -66,6 +70,8 @@ export const seedCities: City[] = [
     costIndex: 'medium',
     imageUrl: imageAssets.amalfi,
     imageAlt: 'A warm coastal village at sunset, Enzo Cetrangolo on Unsplash',
+    lat: 15.2993,
+    lng: 74.1240,
   },
   {
     id: 'city-delhi',
@@ -76,6 +82,8 @@ export const seedCities: City[] = [
     costIndex: 'medium',
     imageUrl: imageAssets.seville,
     imageAlt: 'Intricate Moorish architecture, Klaus Kreuer on Unsplash',
+    lat: 28.6139,
+    lng: 77.2090,
   },
   {
     id: 'city-jaipur',
@@ -86,6 +94,8 @@ export const seedCities: City[] = [
     costIndex: 'medium',
     imageUrl: imageAssets.seville,
     imageAlt: 'Intricate Moorish architecture, Klaus Kreuer on Unsplash',
+    lat: 26.9124,
+    lng: 75.7873,
   },
   {
     id: 'city-udaipur',
@@ -96,6 +106,8 @@ export const seedCities: City[] = [
     costIndex: 'medium',
     imageUrl: imageAssets.patagonia,
     imageAlt: 'A serene mountain lake, Florian Delée on Unsplash',
+    lat: 24.5854,
+    lng: 73.7125,
   },
   {
     id: 'city-bengaluru',
@@ -106,6 +118,8 @@ export const seedCities: City[] = [
     costIndex: 'medium',
     imageUrl: imageAssets.kyoto,
     imageAlt: 'A cozy wooden street, Roméo A. on Unsplash',
+    lat: 12.9716,
+    lng: 77.5946,
   },
   {
     id: 'city-manali',
@@ -116,6 +130,8 @@ export const seedCities: City[] = [
     costIndex: 'low',
     imageUrl: imageAssets.patagonia,
     imageAlt: 'A serene mountain lake, Florian Delée on Unsplash',
+    lat: 32.2432,
+    lng: 77.1892,
   },
 ]
 

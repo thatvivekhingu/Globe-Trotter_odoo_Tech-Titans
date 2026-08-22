@@ -46,7 +46,8 @@ export function CreateTripPage() {
         updatedAt: now,
       },
     })
-    notify('Trip created. Let’s shape the first day.')
+    dispatch({ type: 'SET_SELECTED_TRIP', tripId: id })
+    notify('Trip created! Let’s shape the route.')
     navigate(`/trips/${id}/builder`)
   }
 

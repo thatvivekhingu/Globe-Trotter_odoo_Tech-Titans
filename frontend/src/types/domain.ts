@@ -51,6 +51,8 @@ export interface City {
   costIndex: CostIndex
   imageUrl: string
   imageAlt: string
+  lat?: number
+  lng?: number
 }
 
 export interface Activity {

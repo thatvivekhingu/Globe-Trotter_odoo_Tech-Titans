@@ -1,17 +1,18 @@
 import { useEffect, useMemo, useReducer, type ReactNode } from 'react'
 import { createInitialDb } from '../mock/data'
-import { DEMO_STATE_KEY, hasDemoSession } from '../lib/authStorage'
+import { DEMO_STATE_KEY } from '../lib/authStorage'
 import type { TripWiseState } from '../types/domain'
 import { TripWiseContext, type TripWiseContextValue } from './TripWiseContext'
 import { tripWiseReducer } from './reducer'
 
 
 function createInitialState(): TripWiseState {
-  if (typeof window !== 'undefined' && hasDemoSession()) {
+  if (typeof window !== 'undefined') {
     const stored = window.localStorage.getItem(DEMO_STATE_KEY)
     if (stored) {
       try {
-        return JSON.parse(stored) as TripWiseState
+        const parsed = JSON.parse(stored) as TripWiseState
+        if (parsed?.db?.trips?.length) return parsed
       } catch {
         window.localStorage.removeItem(DEMO_STATE_KEY)
       }
@@ -20,7 +21,7 @@ function createInitialState(): TripWiseState {
 
   return {
     db: createInitialDb(),
-    currentUserId: null,
+    currentUserId: 'user-1',
     selectedTripId: 'trip-konkan',
     activeCalendarView: 'calendar',
     selectedDayId: '2026-10-03',
@@ -32,7 +33,9 @@ export function TripWiseProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(tripWiseReducer, undefined, createInitialState)
 
   useEffect(() => {
-    if (hasDemoSession()) window.localStorage.setItem(DEMO_STATE_KEY, JSON.stringify(state))
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(DEMO_STATE_KEY, JSON.stringify(state))
+    }
   }, [state])
 
   useEffect(() => {

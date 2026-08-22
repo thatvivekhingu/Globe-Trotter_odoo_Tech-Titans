@@ -25,6 +25,7 @@ export type TripWiseAction =
   | { type: 'UPDATE_STOP'; stopId: string; changes: Partial<TripStop> }
   | { type: 'REMOVE_STOP'; stopId: string }
   | { type: 'REORDER_STOPS'; tripId: string; orderedStopIds: string[] }
+  | { type: 'ADD_ACTIVITY'; activity: import('../types/domain').Activity }
   | { type: 'ADD_TRIP_ACTIVITY'; activity: TripActivity }
   | { type: 'UPDATE_TRIP_ACTIVITY'; activityId: string; changes: Partial<TripActivity> }
   | { type: 'REMOVE_TRIP_ACTIVITY'; activityId: string }
@@ -121,6 +122,11 @@ export function tripWiseReducer(state: TripWiseState, action: TripWiseAction): T
             return order === -1 ? stop : { ...stop, order }
           }),
         },
+      }
+    case 'ADD_ACTIVITY':
+      return {
+        ...state,
+        db: { ...state.db, activities: [...state.db.activities, action.activity] },
       }
     case 'ADD_TRIP_ACTIVITY':
       return {
