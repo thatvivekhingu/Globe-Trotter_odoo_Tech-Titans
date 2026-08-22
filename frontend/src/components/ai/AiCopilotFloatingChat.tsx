@@ -75,27 +75,14 @@ export function AiCopilotFloatingChat() {
   function generateSmartAiResponse(prompt: string): string {
     const p = prompt.toLowerCase()
 
-    if (p.includes('hey') || p.includes('hello') || p.includes('hi') || p.includes('namaste')) {
-      return `Namaste Priyanka! 🌟 I'm your GlobeTrotter AI Travel Copilot. 
-
-How can I assist your travel plans today? 
-• 🏖️ Plan a vibrant beach trip to **Goa** (Scuba, Mandovi cruise, beach shacks)
-• ❄️ Snow & Gondola adventure in **Gulmarg & Kashmir**
-• 🏔️ Paragliding & mountain cafes in **Manali & Kasol**
-• 🌴 Houseboats & tea hills in **Kerala Backwaters**
-• ✈️ Check live flight deals & 5-star hotel options
-
-Feel free to ask me anything in English or Hindi!`
-    }
-
     if (p.includes('goa')) {
       return `🌴 **Top Recommendations for Goa Trip (4D/3N):**
 1. **Day 1:** Check in at Candolim/Baga, sunset drinks at Britto's & evening Mandovi River Luxury Cruise.
-2. **Day 2:** Grand Island PADI Scuba Diving & dolphin safari, followed by Tito's Lane nightlife.
+2. **Day 2:** Grand Island PADI Scuba Diving & dolphin safari, followed by Tito's Lane nightlife & Curlies.
 3. **Day 3:** 4x4 Jeep Safari to Dudhsagar Waterfalls & Goan spice plantation buffet lunch.
 4. **Day 4:** South Goa peaceful Palolem beach & authentic fish thali at Martin's Corner before flight.
 
-💡 *Estimated Budget:* ₹15,000 - ₹25,000 per person including stays and activities.`
+💡 *Estimated Budget:* ₹15,000 - ₹25,000 per person including stays and activities. Would you like me to add this into your live itinerary workspace?`
     }
 
     if (p.includes('kashmir') || p.includes('gulmarg') || p.includes('srinagar')) {
@@ -118,6 +105,14 @@ Feel free to ask me anything in English or Hindi!`
 💡 *Pro Tip:* Book early morning paragliding slots for clearer mountain skies!`
     }
 
+    if (p.includes('food') || p.includes('restaurant') || p.includes('khana') || p.includes('eat')) {
+      return `🍤 **Must-Try Local Food & Cafe Picks:**
+• **Goa:** Butter Garlic Prawns at Fisherman's Wharf, Bebinca dessert, and Pork Vindaloo at Mum's Kitchen.
+• **Kashmir:** Wazwan (Rogan Josh, Tabak Maaz), Gushtaba, and warm saffron Kahwa.
+• **Rajasthan:** Dal Baati Churma, Laal Maas, and Ghewar at LMB Jaipur.
+• **Himachal:** Siddu with ghee, Trout fish, and apple pie in Old Manali cafes.`
+    }
+
     if (p.includes('dubai')) {
       return `🏙️ **Dubai Grand Vacation Highlights (5D/4N):**
 1. **Burj Khalifa:** Fast-track 124th & 125th floor observation deck at golden hour.
@@ -137,29 +132,53 @@ Feel free to ask me anything in English or Hindi!`
 You can manage, track and split all expenses under our **Budget & Split** tab!`
     }
 
-    return `🌍 **GlobeTrotter AI Advice:**
-I'd love to help you plan that! You can explore our pre-curated **MakeMyTrip Holiday Packages** in the *Curated Tours* tab, check real-time flights & hotels in *Bookings*, or tell me your preferred destination, travel dates, and budget to generate a custom day-wise itinerary!`
+    if (/^(hi|hello|hey|namaste|hola|greetings)\b/i.test(prompt.trim())) {
+      return `Namaste Priyanka! 🌟 I'm your GlobeTrotter AI Travel Copilot. 
+
+How can I assist your travel plans today? 
+• 🏖️ Plan a vibrant beach trip to **Goa** (Scuba, Mandovi cruise, beach shacks)
+• ❄️ Snow & Gondola adventure in **Gulmarg & Kashmir**
+• 🏔️ Paragliding & mountain cafes in **Manali & Kasol**
+• 🌴 Houseboats & tea hills in **Kerala Backwaters**
+• ✈️ Check live flight deals & 5-star hotel options
+
+Feel free to ask me anything in English or Hindi!`
+    }
+
+    return `🌍 **GlobeTrotter AI Travel Insight for "${prompt}":**
+• **Top Recommendation:** Plan a 3-5 day itinerary focused on central landmarks and local heritage quarters.
+• **Transport Strategy:** Book flights or express trains 2-3 weeks in advance for 20-30% fare savings.
+• **Budget Estimate:** ~₹4,500 to ₹7,000 / day covers premium boutique stay, local transport, and curated activities.
+• **Next Step:** You can generate a full constraint-optimized itinerary under our **AI Planner** or open the **Command Palette (Ctrl + K)**!`
   }
 
-  const handleSend = async (textToSend?: string) => {
-    const query = (textToSend || input).trim()
-    if (!query || loading) return
+  async function handleSend(customText?: string) {
+    const query = customText || input
+    if (!query.trim() || loading) return
 
+    setLoading(true)
     const userMsg: ChatMessage = {
-      id: `u-${Date.now()}`,
+      id: `user-${Date.now()}`,
       sender: 'user',
       text: query,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     }
 
-    setMessages((prev) => [...prev, userMsg])
+    const updatedMessages = [...messages, userMsg]
+    setMessages(updatedMessages)
     setInput('')
+
     const groqKey = localStorage.getItem('GLOBETROTTER_GROQ_KEY') || import.meta.env.VITE_GROQ_API_KEY || ''
     let selectedModel = localStorage.getItem('GLOBETROTTER_AI_MODEL') || 'llama-3.3-70b-versatile'
     if (selectedModel === 'openai/gpt-oss-120b' || selectedModel === 'llama-3.3-70b') selectedModel = 'llama-3.3-70b-versatile'
 
     if (groqKey && selectedModel !== 'local-engine') {
       try {
+        const history = updatedMessages.slice(-6).map((m) => ({
+          role: m.sender === 'user' ? 'user' : 'assistant',
+          content: m.text,
+        }))
+
         const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
           method: 'POST',
           headers: {
@@ -171,12 +190,15 @@ I'd love to help you plan that! You can explore our pre-curated **MakeMyTrip Hol
             messages: [
               {
                 role: 'system',
-                content: 'You are GlobeTrotter AI Copilot, an expert Indian & global travel architect. Provide deeply helpful, authentic, practical travel advice with specific recommendations, timings, and estimated costs in ₹ INR.',
+                content: 'You are GlobeTrotter AI Copilot, a brilliant, conversational, helpful travel architect like ChatGPT-4. Provide insightful, realistic travel advice, timings, costs in ₹ INR, food tips, and hidden gems. Format response cleanly with bold text and bullet points. Answer naturally in the same language or mix (English/Hindi) as the user.',
               },
-              { role: 'user', content: query },
+              ...history,
             ],
+            temperature: 0.7,
+            max_tokens: 800,
           }),
         })
+
         const data = await response.json()
         const aiText = data?.choices?.[0]?.message?.content
         if (aiText) {
@@ -200,7 +222,15 @@ I'd love to help you plan that! You can explore our pre-curated **MakeMyTrip Hol
     // Intelligent in-browser fallback AI travel response
     await new Promise((resolve) => setTimeout(resolve, 400))
     const fallbackReply = generateSmartAiResponse(query)
-    setMessages((prev) => [...prev, { id: `ai-${Date.now()}`, sender: 'ai', text: fallbackReply, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }])
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: `ai-${Date.now()}`,
+        sender: 'ai',
+        text: fallbackReply,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      },
+    ])
     setLoading(false)
   }
 
