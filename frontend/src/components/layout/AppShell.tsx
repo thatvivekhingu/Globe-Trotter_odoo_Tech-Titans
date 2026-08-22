@@ -69,7 +69,7 @@ function TopBar({ onMenu, onOpenCommandPalette }: { onMenu: () => void; onOpenCo
   const { currentUser } = useTripWise()
 
   return (
-    <header className="sticky top-0 z-30 border-b border-slate-800/90 bg-[#0B0F19]/95 text-white backdrop-blur-xl shadow-lg shadow-black/20">
+    <header className="fixed top-0 inset-x-0 z-40 h-16 border-b border-slate-800/90 bg-[#0B0F19]/95 text-white backdrop-blur-xl shadow-lg shadow-black/20">
       <div className="flex h-16 items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
         <div className="flex items-center gap-3">
           <IconButton label="Open navigation" size="sm" className="lg:hidden text-slate-300 hover:text-white hover:bg-slate-800" onClick={onMenu}>
@@ -275,7 +275,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <TopBar onMenu={() => setDrawerOpen(true)} onOpenCommandPalette={() => setCommandPaletteOpen(true)} />
       <Sidebar />
       <MobileDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
-      <main key={location.pathname} className="relative z-10 min-w-0 pb-24 lg:ml-60 lg:pb-12">
+      <main key={location.pathname} className="relative z-10 min-w-0 pt-16 pb-24 lg:ml-60 lg:pb-12">
         <div className="mx-auto min-w-0 max-w-[1440px] px-4 py-6 sm:px-6 sm:py-8 lg:px-8 xl:px-10">
           {children}
         </div>
