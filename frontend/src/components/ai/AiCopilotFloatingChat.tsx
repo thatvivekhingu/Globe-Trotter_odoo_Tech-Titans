@@ -47,12 +47,13 @@ export function AiCopilotFloatingChat() {
     setInput('')
     setLoading(true)
 
-    const apiKey = import.meta.env.VITE_GEMINI_API_KEY || ''
+    const apiKey = localStorage.getItem('GLOBETROTTER_GEMINI_KEY') || import.meta.env.VITE_GEMINI_API_KEY || ''
+    const selectedModel = localStorage.getItem('GLOBETROTTER_GEMINI_MODEL') || 'gemini-1.5-flash'
 
-    if (apiKey) {
+    if (apiKey && selectedModel !== 'local-engine') {
       try {
         const response = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+          `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent?key=${apiKey}`,
           {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },

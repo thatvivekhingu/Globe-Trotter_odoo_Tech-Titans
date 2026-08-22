@@ -52,10 +52,11 @@ export function SmartRecommendationPage() {
     const numDays = Math.max(2, parseInt(days, 10) || 5)
     const numBudget = Math.max(5000, parseInt(budget, 10) || 30000)
 
-    // Check if Gemini API key exists in environment
-    const apiKey = import.meta.env.VITE_GEMINI_API_KEY || ''
+    // Check configured model and API key
+    const apiKey = localStorage.getItem('GLOBETROTTER_GEMINI_KEY') || import.meta.env.VITE_GEMINI_API_KEY || ''
+    const selectedModel = localStorage.getItem('GLOBETROTTER_GEMINI_MODEL') || 'gemini-1.5-flash'
 
-    if (apiKey) {
+    if (apiKey && selectedModel !== 'local-engine') {
       try {
         const prompt = `Recommend a multi-city travel itinerary in India starting from ${originCity} for ${numDays} days with a total budget of ₹${numBudget}.
 Travel style: ${travelStyle}, Interest: ${interest}, Destination Type: ${destinationType}.
@@ -81,7 +82,7 @@ Return strict JSON with this structure:
   },
   "totalEstimatedCost": number
 }`
-        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent?key=${apiKey}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -90,11 +91,13 @@ Return strict JSON with this structure:
           })
         })
         const data = await res.json()
-        const parsed = JSON.parse(data.candidates[0].content.parts[0].text)
-        setResult(parsed)
-        notify('Smart AI recommendations ready!')
-        setLoading(false)
-        return
+        if (data?.candidates?.[0]?.content?.parts?.[0]?.text) {
+          const parsed = JSON.parse(data.candidates[0].content.parts[0].text)
+          setResult(parsed)
+          notify(`AI recommendations generated using ${selectedModel}!`)
+          setLoading(false)
+          return
+        }
       } catch (err) {
         console.warn('Gemini API call failed, falling back to smart algorithm:', err)
       }
