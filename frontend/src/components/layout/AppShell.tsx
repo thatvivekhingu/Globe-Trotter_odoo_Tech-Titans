@@ -167,7 +167,7 @@ function Sidebar() {
           <p className="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">Enterprise & Finance</p>
           <SidebarLink label="Odoo ERP Sync" to="/odoo" icon={Building2} badge="Odoo" />
           <SidebarLink label="Analytics & KPIs" to="/analytics" icon={BarChart3} />
-          <SidebarLink label="Budget & Split" to="/trips/trip-konkan/budget" icon={WalletCards} />
+          <SidebarLink label="Budget & Split" to="/trips/trip-goa-mmt/budget" icon={WalletCards} />
           <SidebarLink label="Pricing & Plans" to="/pricing" icon={CreditCard} />
         </div>
 
