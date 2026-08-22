@@ -8,26 +8,19 @@
 [![Groq LLaMA](https://img.shields.io/badge/Groq_LLaMA-3.3_70B-FF6F00?style=for-the-badge&logo=groq&logoColor=white)](https://groq.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
 
+**GlobeTrotter** is an all-in-one AI travel planning, live booking aggregator, and corporate expense platform integrated with Odoo ERP. Designed to outperform traditional OTA platforms like MakeMyTrip, Goibibo, and TripAdvisor, GlobeTrotter introduces zero convenience fees, dynamic AI itinerary generation, in-browser neural bill scanning, and seamless B2B corporate accounting.
+
 ---
 
-## 🔥 Why GlobeTrotter Outperforms Legacy Platforms (MakeMyTrip, Booking.com, TripAdvisor)
+## 📸 Application Visual Showcase
 
-GlobeTrotter was built from the ground up to solve the 5 biggest pain points in the travel industry. Here is how GlobeTrotter directly beats existing OTA giants with **live working examples**:
+| 🏠 **1. Modern Dashboard & Destination Pulse** | ⚡ **2. Groq LLaMA 3.3 AI Trip Planner & TSP Metrics** |
+|:---:|:---:|
+| ![GlobeTrotter Dashboard](docs/screenshots/dashboard_overview.png) | ![AI Trip Planner & TSP Route Optimizer](docs/screenshots/ai_trip_planner.png) |
 
-### 📊 Direct Feature Benchmarking Matrix
-
-| Feature & Capability | MakeMyTrip (MMT) | Booking.com | TripAdvisor | 🌟 **GlobeTrotter** |
-|---|---|---|---|---|
-| **Convenience Fee** | ❌ Extra ₹300 - ₹500/booking | ❌ Hidden currency markups | N/A | ✅ **₹0 Convenience Fee & 100% Price Match** |
-| **Itinerary Generation** | ❌ Rigid uneditable PDFs | ❌ None | ❌ Static review lists | ✅ **1-Click AI Customization (Groq LLaMA 3.3 70B)** |
-| **Receipt & Bill Scanning** | ❌ None | ❌ None | ❌ None | ✅ **Client-side WebAssembly Tesseract.js OCR** |
-| **Group Expense Split** | ❌ External (Use Splitwise) | ❌ None | ❌ None | ✅ **Native Split Ledger & Settlement Engine** |
-| **Corporate ERP Sync** | ❌ Manual invoice PDF | ❌ Manual PDF | ❌ None | ✅ **1-Click Odoo ERP HR & GST Claim Sync** |
-| **Voice AI Copilot** | ❌ Text-only bot | ❌ None | ❌ None | ✅ **Bilingual Speech Engine (Hindi + English)** |
-| **Live API Integrations** | ❌ Closed proprietary data | ❌ Closed data | ❌ Static data | ✅ **Live Open-Meteo Weather + OpenExchange Forex** |
-=======
-**GlobeTrotter** is an all-in-one AI travel planning, live booking aggregator, and corporate expense platform integrated with Odoo ERP. Designed to outperform traditional OTA platforms like MakeMyTrip, Goibibo, and TripAdvisor, GlobeTrotter introduces zero convenience fees, dynamic AI itinerary generation, in-browser neural bill scanning, and seamless B2B corporate accounting.
->>>>>>> ff55fb6 (docs(readme): clean collaborator and team references from project readme)
+| 🛡️ **3. Visa-Compliant Insurance & Forex Hub** | 🏢 **4. Enterprise Odoo 18 ERP Sync & Invoicing** |
+|:---:|:---:|
+| ![International Travel Insurance & Forex](docs/screenshots/travel_insurance_forex.png) | ![Odoo Enterprise ERP Sync](docs/screenshots/odoo_erp_sync.png) |
 
 ---
 
