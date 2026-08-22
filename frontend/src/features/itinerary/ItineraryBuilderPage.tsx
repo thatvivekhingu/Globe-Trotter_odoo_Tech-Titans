@@ -1,9 +1,10 @@
-import { ArrowLeft, ArrowRight, CalendarPlus, History, Kanban, LayoutList, MapPin, Plus, Save, Share2, Sparkles, Users, X } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Calendar, CalendarPlus, Download, History, Kanban, LayoutList, MapPin, Plus, Save, Share2, Sparkles, Users, X } from 'lucide-react'
 import { useEffect, useState, type FormEvent } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { getApiErrorMessage } from '../../lib/api/client'
 import { copyToClipboard } from '../../lib/clipboard'
-import { formatDateRange, formatShareUrl } from '../../lib/formatters'
+import { formatCurrency, formatDateRange, formatShareUrl } from '../../lib/formatters'
+import { downloadTripItineraryPdf } from '../../lib/pdfCertificates'
 import { useTripData } from '../../hooks/useTripSelectors'
 import { useTripWise } from '../../state/useTripWise'
 import { Badge } from '../../components/ui/Badge'
@@ -187,6 +188,43 @@ export function ItineraryBuilderPage() {
     notify('Opened WhatsApp with formatted travel summary!')
   }
 
+  function handleDownloadPdf() {
+    downloadTripItineraryPdf({
+      tripName: tripData.trip.name,
+      destination: tripData.stops.map(s => state.db.cities.find(c => c.id === s.cityId)?.name || 'India').join(', '),
+      dates: formatDateRange(tripData.trip.startDate, tripData.trip.endDate),
+      travelers: 2,
+      budgetLimit: formatCurrency(tripData.trip.budgetLimit || 50000),
+      stops: tripData.stops.map(s => {
+        const cityObj = state.db.cities.find(c => c.id === s.cityId)
+        const stopActs = tripData.activities.filter(a => a.stopId === s.id)
+        return {
+          city: cityObj?.name || 'City Stop',
+          dates: `${s.arrivalDate} to ${s.departureDate}`,
+          activities: stopActs.map(a => {
+            const actObj = state.db.activities.find(act => act.id === a.activityId)
+            return {
+              name: actObj?.name || 'Planned Landmark Tour',
+              time: a.startTime || '10:00 AM',
+              cost: a.estimatedCost ? formatCurrency(a.estimatedCost) : 'Free'
+            }
+          })
+        }
+      })
+    })
+    notify('📄 Official Trip Itinerary PDF downloaded successfully!')
+  }
+
+  function handleSyncGoogleCalendar() {
+    const title = encodeURIComponent(`Trip: ${tripData.trip.name}`)
+    const details = encodeURIComponent(`GlobeTrotter Travel Plan:\n${tripData.trip.description || 'Synced itinerary'}\nLive URL: ${window.location.href}`)
+    const startIso = tripData.trip.startDate.replace(/-/g, '') + 'T090000Z'
+    const endIso = tripData.trip.endDate.replace(/-/g, '') + 'T210000Z'
+    const gCalUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&details=${details}&dates=${startIso}/${endIso}`
+    window.open(gCalUrl, '_blank')
+    notify('🗓️ Opened Google Calendar with your trip events!')
+  }
+
   return (
     <div className="space-y-7">
       <div className="flex flex-wrap items-center justify-between gap-4">
@@ -197,6 +235,12 @@ export function ItineraryBuilderPage() {
           </Button>
           <Button variant="secondary" size="sm" icon={<History size={14} />} onClick={() => setAuditDrawerOpen(true)}>
             Audit Log
+          </Button>
+          <Button variant="secondary" size="sm" icon={<Download size={14} className="text-indigo-600" />} onClick={handleDownloadPdf}>
+            Export PDF
+          </Button>
+          <Button variant="secondary" size="sm" icon={<Calendar size={14} className="text-blue-600" />} onClick={handleSyncGoogleCalendar}>
+            Google Cal
           </Button>
           <Button variant="secondary" size="sm" icon={<Share2 size={14} className="text-emerald-600" />} onClick={shareViaWhatsApp}>
             WhatsApp
