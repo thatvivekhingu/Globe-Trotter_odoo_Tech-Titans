@@ -16,6 +16,7 @@ Phase 4 provides the runnable FastAPI backend foundation for TripWise.
 - Cities, activities, trips, stops, activities, expenses, budgets, and public shares
 - Repeatable reference-data seeding
 - Alembic configuration for future migrations
+- Database-grounded RAG for recommendations and the travel copilot
 
 ## Setup
 
@@ -47,6 +48,18 @@ DATABASE_URL=mysql+pymysql://tripwise_user:change-me@127.0.0.1:3306/tripwise
 ```
 
 Use a long random `JWT_SECRET_KEY` outside local development.
+
+## AI and RAG
+
+Set `GROQ_API_KEY` in the backend `.env` to enable generation with `GROQ_MODEL` (default:
+`openai/gpt-oss-120b`). The key stays server-side. Every recommendation and copilot request
+retrieves matching cities and activities from the TripWise catalogue and includes those records
+as grounding context. When the provider is unavailable, recommendations use the catalogue-backed
+deterministic response; chat returns `503` instead of inventing travel advice.
+
+The standalone `rag_demo.ipynb` is an experimentation notebook. Production requests use the
+dependency-light API retrieval service in `app/services/rag.py`, so API startup does not require
+FAISS or a local embedding model.
 
 ## Run
 

@@ -92,3 +92,26 @@ def test_activity_city_must_match_stop_city(client):
         'estimated_cost': str(activity['default_cost']),
     })
     assert response.status_code == 422
+
+
+def test_recommendations_use_catalogue_without_provider(client):
+    response = client.post('/api/v1/ai/recommendations', json={
+        'starting_city': 'Ahmedabad',
+        'days': 3,
+        'budget': 18000,
+        'travel_style': 'balanced',
+        'interests': ['food'],
+        'destination_type': 'heritage',
+    })
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload['days']
+    assert payload['budgetBreakdown']['transportation'] == 4500
+
+
+def test_chat_does_not_fabricate_when_provider_is_unavailable(client):
+    response = client.post('/api/v1/ai/chat', json={'message': 'What should I do in Goa?'})
+
+    assert response.status_code == 503
+    assert 'AI provider' in response.json()['detail']

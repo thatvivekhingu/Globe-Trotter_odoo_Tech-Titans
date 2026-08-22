@@ -2,9 +2,12 @@ import json
 import urllib.request
 import urllib.error
 from typing import Any
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 from app.core.config import settings
+from app.db.session import get_db
+from app.services.rag import format_context, retrieve_travel_context
+from sqlalchemy.orm import Session
 
 router = APIRouter()
 
@@ -58,11 +61,12 @@ def call_groq_llm(prompt: str, json_mode: bool = False) -> str | None:
 
 
 @router.post('/recommendations')
-def generate_recommendations(req: RecommendationRequest) -> dict[str, Any]:
+def generate_recommendations(req: RecommendationRequest, db: Session = Depends(get_db)) -> dict[str, Any]:
     """
     Generate AI-powered, constraint-aware travel itineraries using Gemini 1.5 Flash
     with robust deterministic fallback.
     """
+    retrieved_context = format_context(retrieve_travel_context(db, f'{req.starting_city} {req.destination_type} {" ".join(req.interests)}'))
     prompt = f"""
 You are GlobeTrotter AI, an expert travel architect.
 Create a detailed, realistic travel itinerary for India based on these constraints:
@@ -72,6 +76,10 @@ Create a detailed, realistic travel itinerary for India based on these constrain
 - Total Budget: INR {req.budget}
 - Travel Style: {req.travel_style}
 - Interests: {', '.join(req.interests)}
+
+Use only the following TripWise catalogue records as factual grounding. Do not invent prices,
+availability, reviews, or attractions that are not present in these records:
+{retrieved_context}
 
 Return ONLY a valid JSON object (no markdown, no backticks) with this structure:
 {{
@@ -172,19 +180,28 @@ Return ONLY a valid JSON object (no markdown, no backticks) with this structure:
 
 
 @router.post('/chat')
-def chat_copilot(req: ChatRequest) -> dict[str, str]:
+def chat_copilot(req: ChatRequest, db: Session = Depends(get_db)) -> dict[str, str | list[str]]:
     """
     AI Travel Copilot chat endpoint powered by Groq LLaMA / GPT-OSS 120B.
     """
+    documents = retrieve_travel_context(db, f'{req.message} {req.trip_context or ""}')
+    context = format_context(documents)
     prompt = f"""
 You are GlobeTrotter AI Copilot, a helpful and knowledgeable travel assistant.
 Context: {req.trip_context or 'General travel in India and worldwide'}
 User question: {req.message}
 
+Ground your answer in these TripWise records. If the records do not answer the question, say
+that clearly and recommend checking an official provider. Never invent live prices or availability.
+{context}
+
 Respond concisely and practically with friendly travel guidance in 2-3 short bullet points or sentences.
 """
     reply = call_groq_llm(prompt)
     if not reply:
-        reply = "I recommend booking transport early, trying local breakfast specialties, and keeping a buffer for unexpected scenic detours!"
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail='AI provider is not configured or unavailable. Set GROQ_API_KEY on the backend.',
+        )
 
-    return {"response": reply}
+    return {"reply": reply, "sources": [document.source for document in documents]}
