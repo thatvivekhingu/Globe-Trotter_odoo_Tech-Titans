@@ -22,6 +22,8 @@ import { SafetyAndLanguagePage } from '../features/tools/SafetyAndLanguagePage'
 import { AnalyticsReportsPage } from '../features/analytics/AnalyticsReportsPage'
 import { OdooIntegrationPage } from '../features/odoo/OdooIntegrationPage'
 import { PricingPage } from '../features/pricing/PricingPage'
+import { VisaAssistancePage } from '../features/visa/VisaAssistancePage'
+import { ForexAndInsurancePage } from '../features/forex/ForexAndInsurancePage'
 import { BookingPage } from '../features/booking/BookingPage'
 import { Card } from '../components/ui/Card'
 import { Button } from '../components/ui/Button'
@@ -78,6 +80,8 @@ function AppRoutes() {
           <Route path="/recommendations" element={<SmartRecommendationPage />} />
           <Route path="/plan" element={<SmartRecommendationPage />} />
           <Route path="/booking" element={<BookingPage />} />
+          <Route path="/visa" element={<VisaAssistancePage />} />
+          <Route path="/forex" element={<ForexAndInsurancePage />} />
           <Route path="/safety" element={<SafetyAndLanguagePage />} />
           <Route path="/analytics" element={<AnalyticsReportsPage />} />
           <Route path="/reports" element={<AnalyticsReportsPage />} />

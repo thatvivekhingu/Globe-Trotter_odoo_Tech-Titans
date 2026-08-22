@@ -1,4 +1,4 @@
-import { BarChart3, Bell, Building2, CheckSquare, Compass, CreditCard, Globe, LayoutDashboard, Map, Menu, Plane, Plus, Search, Settings, Shield, Sparkles, UserCircle, WalletCards } from 'lucide-react'
+import { BarChart3, Bell, Building2, CheckSquare, Compass, CreditCard, DollarSign, Globe, LayoutDashboard, Map, Menu, Plane, Plus, Search, Settings, Shield, Sparkles, UserCircle, WalletCards } from 'lucide-react'
 import { useState, type FormEvent, type ReactNode } from 'react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { useTripWise } from '../../state/useTripWise'
@@ -13,6 +13,8 @@ const primaryNavigation = [
   { label: 'My Trips', to: '/trips', icon: Map },
   { label: 'AI Planner', to: '/recommendations', icon: Sparkles, badge: 'LLaMA' },
   { label: 'Bookings', to: '/booking', icon: Plane, badge: 'Live' },
+  { label: 'Visa Services', to: '/visa', icon: Globe, badge: '120+' },
+  { label: 'Forex & Insurance', to: '/forex', icon: DollarSign, badge: 'RBI' },
   { label: 'Odoo ERP Sync', to: '/odoo', icon: Building2, badge: 'Odoo' },
   { label: 'Analytics', to: '/analytics', icon: BarChart3 },
   { label: 'Discover', to: '/discover/cities', icon: Compass },
