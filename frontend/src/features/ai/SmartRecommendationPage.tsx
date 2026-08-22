@@ -522,7 +522,7 @@ Return valid JSON only with this schema:
                             </p>
                           </div>
                           <span className="font-display font-bold text-slate-800 shrink-0">
-                            {act.cost ? formatCurrency(act.cost) : 'Free'}
+                            {act.cost ? formatCurrency(act.cost) : '₹450'}
                           </span>
                         </div>
                       ))}
