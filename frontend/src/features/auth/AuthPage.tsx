@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { Eye, EyeOff, Globe, Lock, Mail, Phone, ShieldCheck, Sparkles } from 'lucide-react'
+import { Eye, EyeOff, Globe, Lock, Mail, Phone, Sparkles } from 'lucide-react'
 import { checkApiHealth, getApiStatusLabel } from '../../lib/api/client'
 import { useAuth } from '../../state/useAuth'
 import { useTripWise } from '../../state/useTripWise'

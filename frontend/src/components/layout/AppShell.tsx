@@ -77,37 +77,43 @@ function TopBar({ onMenu, onOpenCommandPalette }: { onMenu: () => void; onOpenCo
             <Menu size={18} />
           </IconButton>
           <NavLink to="/dashboard" className="flex items-center gap-2.5 group">
-            <div className="size-9 rounded-xl bg-[#0F172A] text-[#B4F056] flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform">
-              <Globe size={20} />
+            <div className="size-9 rounded-2xl bg-linear-to-br from-slate-900 via-indigo-950 to-slate-900 text-[#B4F056] flex items-center justify-center shadow-md border border-slate-700/50 group-hover:scale-105 transition-all">
+              <Globe size={19} className="text-[#B4F056]" />
             </div>
-            <span className="font-display text-xl font-bold tracking-tight text-slate-900">
-              GlobeTrotter<span className="text-[#4F46E5]">.</span>
-            </span>
+            <div className="flex items-baseline gap-1.5">
+              <span className="font-display text-xl font-bold tracking-tight text-slate-900">
+                GlobeTrotter
+              </span>
+              <span className="text-[9px] font-extrabold uppercase tracking-wider bg-linear-to-r from-[#4F46E5] to-violet-600 text-white px-1.5 py-0.2 rounded-md shadow-2xs">
+                PRO
+              </span>
+            </div>
           </NavLink>
         </div>
 
-        {/* Global Spotlight Search Trigger */}
-        <button
-          type="button"
-          onClick={onOpenCommandPalette}
-          className="hidden max-w-md flex-1 md:flex items-center justify-between h-10 rounded-full border border-slate-200 bg-slate-50/80 px-4 text-xs text-slate-500 hover:border-slate-400 hover:bg-white transition-all text-left cursor-pointer"
-        >
-          <div className="flex items-center gap-2.5">
-            <Search size={15} className="text-slate-400" />
-            <span className="text-slate-400">Search destinations, flights, forex, visa, packing...</span>
-          </div>
-          <kbd className="hidden rounded-md border border-slate-200 bg-white px-2 py-0.5 text-[10px] font-bold text-slate-600 lg:inline shadow-2xs">
-            ⌘ K
-          </kbd>
-        </button>
+        {/* Global Search Bar */}
+        <form onSubmit={handleSearch} className="hidden max-w-md flex-1 md:block">
+          <label className="group flex h-10 items-center gap-2.5 rounded-full border border-slate-200/90 bg-slate-50/90 px-4 text-xs text-slate-500 focus-within:border-[#4F46E5] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#4F46E5]/15 transition-all shadow-2xs">
+            <Search size={15} className="text-slate-400 group-focus-within:text-[#4F46E5]" />
+            <input
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              className="min-w-0 flex-1 bg-transparent text-xs font-medium text-slate-900 outline-none placeholder:text-slate-400"
+              placeholder="Search 30+ Indian destinations, flights, stays..."
+            />
+            <kbd className="hidden rounded-md border border-slate-200 bg-white px-1.5 py-0.5 text-[10px] font-semibold text-slate-400 lg:inline shadow-2xs">
+              ⌘ K
+            </kbd>
+          </label>
+        </form>
 
         {/* Right Nav Actions */}
         <div className="flex items-center gap-3">
           <LivePresenceBar />
 
-          <div className="hidden xl:flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200/60 text-[11px] font-semibold text-emerald-700">
+          <div className="hidden xl:flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-[11px] font-bold text-emerald-700">
             <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
-            Gemini AI Active
+            Groq LLaMA 3.3 Active
           </div>
 
           <Button asChild size="sm" icon={<Plus size={14} />} className="hidden sm:inline-flex rounded-full">
