@@ -120,7 +120,7 @@ export function BudgetPage() {
         </Card>
         <Card><MetricCard label="Cost per day" value={formatCurrency(data.budget.costPerDay)} detail="Average for this route" /></Card>
         <Card><MetricCard label="Budget limit" value={data.budget.budgetLimit ? formatCurrency(data.budget.budgetLimit) : 'Not set'} detail="Your working comfort zone" /></Card>
-        <Card><MetricCard label="Remaining" value={data.budget.remaining === null ? '—' : formatCurrency(data.budget.remaining)} detail={overBudget ? 'A small rethink may help' : 'Room for one more good idea'} accent={overBudget ? 'clay' : 'sage'} /></Card>
+        <Card><MetricCard label="GST Tax Shield (18%)" value={formatCurrency(Math.round(data.budget.total * 0.18))} detail="Corporate audit claimable" accent="sage" /></Card>
       </div>
 
       {data.budget.budgetLimit ? (

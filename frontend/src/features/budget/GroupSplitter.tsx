@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ArrowRight, Check, Download, FileText, Plus, QrCode, Trash2, Users, Wallet, X } from 'lucide-react'
+import { ArrowRight, FileText, Plus, QrCode, Trash2, Users, Wallet } from 'lucide-react'
 import { Card } from '../../components/ui/Card'
 import { Button } from '../../components/ui/Button'
 import { formatCurrency } from '../../lib/formatters'
