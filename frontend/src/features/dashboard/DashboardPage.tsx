@@ -9,6 +9,7 @@ import { Card, SectionHeading } from '../../components/ui/Card'
 import { EmptyState } from '../../components/ui/Feedback'
 import { ImageWithFallback } from '../../components/ui/ImageWithFallback'
 import { TripMapView } from '../../components/map/TripMapView'
+import { useState, useEffect } from 'react'
 import { LiveWeatherWidget } from '../../components/weather/LiveWeatherWidget'
 
 export function DashboardPage() {
@@ -22,33 +23,62 @@ export function DashboardPage() {
 
   const destinationCity = state.db.cities.find(c => c.id === nextTrip?.stops[0]?.cityId) || state.db.cities[0]
 
+  // Real-time ticking countdown
+  const [timeLeft, setTimeLeft] = useState({ days: 3, hours: 14, mins: 28, secs: 42 })
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev.secs > 0) return { ...prev, secs: prev.secs - 1 }
+        if (prev.mins > 0) return { ...prev, mins: prev.mins - 1, secs: 59 }
+        if (prev.hours > 0) return { ...prev, hours: prev.hours - 1, mins: 59, secs: 59 }
+        if (prev.days > 0) return { ...prev, days: prev.days - 1, hours: 23, mins: 59, secs: 59 }
+        return prev
+      })
+    }, 1000)
+    return () => clearInterval(timer)
+  }, [])
+
   const quickPillActions = [
     { label: 'AI Trip Architect', to: '/recommendations', icon: Sparkles, color: 'from-indigo-600 to-violet-600', badge: 'Groq 3.3' },
     { label: 'Curated Tour Packages', to: '/packages', icon: Flame, color: 'from-orange-500 to-amber-500', badge: '40% Off' },
     { label: 'Live Bookings', to: '/booking', icon: Plane, color: 'from-blue-600 to-cyan-600', badge: 'Razorpay' },
-    { label: 'Receipt OCR Scanner', to: '/trips/trip-konkan/budget', icon: WalletCards, color: 'from-emerald-600 to-teal-600', badge: 'Neural' },
+    { label: 'Receipt OCR Scanner', to: '/trips/trip-goa-mmt/budget', icon: WalletCards, color: 'from-emerald-600 to-teal-600', badge: 'Neural' },
     { label: 'Visa & Insurance', to: '/forex', icon: ShieldCheck, color: 'from-slate-800 to-slate-900', badge: 'Embassy' },
     { label: 'Odoo ERP Sync', to: '/odoo', icon: Building2, color: 'from-purple-700 to-indigo-900', badge: 'Enterprise' },
   ]
 
   return (
     <div className="space-y-9">
-      {/* 1. Live Flight & Reservation Ticker */}
-      <div className="bg-linear-to-r from-slate-900 via-slate-800 to-indigo-950 text-white py-3 px-5 rounded-3xl flex flex-wrap items-center justify-between gap-3 shadow-lg border border-slate-700/80">
-        <div className="flex items-center gap-3 text-xs font-bold">
+      {/* 1. Live Flight & Reservation Ticker with Live Ticking Countdown */}
+      <div className="bg-linear-to-r from-slate-950 via-slate-900 to-indigo-950 text-white py-3.5 px-5 rounded-3xl flex flex-wrap items-center justify-between gap-4 shadow-xl border border-slate-800">
+        <div className="flex flex-wrap items-center gap-3 text-xs font-bold">
           <span className="bg-[#10B981] text-[#0F172A] px-2.5 py-0.5 rounded-full text-[10px] uppercase font-extrabold tracking-wider animate-pulse">
             Live Ticket
           </span>
           <span className="text-slate-200">
-            IndiGo 6E-5342 (BOM ➔ GOI) · PNR: <span className="font-mono text-[#B4F056]">GT-7K9A2X</span> · Gate 14B · <span className="text-emerald-400">Confirmed</span>
+            ✈️ IndiGo 6E-5342 (BOM ➔ GOI) · Gate 14B · Seat 14A · PNR: <span className="font-mono text-[#B4F056]">GT-7K9A2X</span>
           </span>
         </div>
-        <div className="flex items-center gap-4 text-xs text-slate-300">
-          <span className="hidden sm:inline">🏨 Taj Fort Aguada Ocean Suite</span>
-          <Link to="/booking" className="text-[#B4F056] font-bold hover:underline flex items-center gap-1">
-            Manage PNR ➔
-          </Link>
+
+        {/* Dynamic Countdown Clock */}
+        <div className="flex items-center gap-2 font-mono text-xs bg-black/40 px-3.5 py-1.5 rounded-2xl border border-white/10 text-white">
+          <span className="text-slate-400 font-sans text-[11px] font-bold">Takeoff In:</span>
+          <span className="text-[#B4F056] font-bold">
+            {String(timeLeft.days).padStart(2, '0')}d : {String(timeLeft.hours).padStart(2, '0')}h : {String(timeLeft.mins).padStart(2, '0')}m : {String(timeLeft.secs).padStart(2, '0')}s
+          </span>
         </div>
+      </div>
+
+      {/* Weather Advisory & Smart Packing Alert */}
+      <div className="p-3.5 px-5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-900 flex flex-wrap items-center justify-between gap-3 text-xs">
+        <div className="flex items-center gap-2.5 font-medium">
+          <span className="text-base">🌦️</span>
+          <span><strong>Destination Advisory (Goa):</strong> Light coastal showers expected in afternoon (28°C). Pack a quick-dry windcheater and waterproof sandals.</span>
+        </div>
+        <Link to="/packing" className="text-[#4F46E5] font-bold hover:underline shrink-0">
+          Open Packing Checklist ➔
+        </Link>
       </div>
 
       {/* 2. Top Welcome Header */}
