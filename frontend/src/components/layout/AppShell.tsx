@@ -6,6 +6,8 @@ import { Button, IconButton } from '../ui/Button'
 import { ImageWithFallback } from '../ui/ImageWithFallback'
 import { AiCopilotFloatingChat } from '../ai/AiCopilotFloatingChat'
 
+import { LivePresenceBar } from '../collaboration/LivePresenceBar'
+
 const primaryNavigation = [
   { label: 'Dashboard', to: '/dashboard', icon: LayoutDashboard },
   { label: 'My Trips', to: '/trips', icon: Map },
@@ -102,7 +104,9 @@ function TopBar({ onMenu }: { onMenu: () => void }) {
 
         {/* Right Nav Actions */}
         <div className="flex items-center gap-3">
-          <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200/60 text-[11px] font-semibold text-emerald-700">
+          <LivePresenceBar />
+
+          <div className="hidden xl:flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200/60 text-[11px] font-semibold text-emerald-700">
             <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
             Groq LLaMA Active
           </div>

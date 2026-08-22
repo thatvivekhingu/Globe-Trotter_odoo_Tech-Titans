@@ -5,6 +5,7 @@ import { Badge } from '../../components/ui/Badge'
 import { IconButton } from '../../components/ui/Button'
 import { Card } from '../../components/ui/Card'
 import { DateInput, Field, TextInput } from '../../components/ui/Field'
+import { ActivityVoteButton } from './ActivityVoteButton'
 
 interface ActivityRowProps {
   tripActivity: TripActivity
@@ -31,6 +32,7 @@ export function ActivityRow({ tripActivity, activity, selected, onSelect, onRemo
   return (
     <div className={['group flex items-start gap-3 border-b border-line py-3 last:border-b-0', selected ? 'rounded-control bg-clay/5 px-3 -mx-3' : ''].join(' ')}>
       <button type="button" onClick={onSelect} className="flex min-w-0 flex-1 items-start gap-3 text-left outline-none"><span className={['mt-1 flex size-7 shrink-0 items-center justify-center rounded-full', selected ? 'bg-clay text-white' : 'bg-sage/30 text-ink/60'].join(' ')}><Icon size={14} aria-hidden="true" /></span><span className="min-w-0 flex-1"><span className="flex flex-wrap items-center gap-x-2 gap-y-1"><span className="font-semibold text-sm text-ink">{activity.name}</span><Badge>{formatCategoryLabel(activity.category)}</Badge></span><span className="mt-1 flex flex-wrap items-center gap-3 text-xs text-ink/50"><span className="flex items-center gap-1"><Clock3 size={12} />{formatTime(tripActivity.startTime)}</span><span>{formatDuration(tripActivity.durationMinutes)}</span></span></span></button>
+      <ActivityVoteButton activityId={activity.id} />
       <span className="shrink-0 pt-1 text-xs font-semibold text-ink/60">{tripActivity.estimatedCost ? formatCurrency(tripActivity.estimatedCost) : 'Free'}</span>
       <div className="hidden items-center gap-0.5 sm:flex"><IconButton label={`Move ${activity.name} up`} size="sm" onClick={onMoveUp}><ChevronUp size={14} /></IconButton><IconButton label={`Move ${activity.name} down`} size="sm" onClick={onMoveDown}><ChevronDown size={14} /></IconButton><IconButton label={`Remove ${activity.name}`} size="sm" onClick={onRemove}><Trash2 size={14} /></IconButton></div>
     </div>
