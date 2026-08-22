@@ -271,11 +271,18 @@ export function AppShell({ children }: { children: ReactNode }) {
   }, [])
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-slate-900 relative antialiased selection:bg-[#B4F056] selection:text-[#0F172A]">
-      <TopBar onMenu={() => setDrawerOpen(true)} />
+    <div className="min-h-screen bg-[#F8FAFC] text-slate-900 relative antialiased selection:bg-[#B4F056] selection:text-[#0F172A] overflow-x-hidden">
+      {/* Apple Ambient Frosted Glass Blur Blobs */}
+      <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
+        <div className="absolute -top-24 right-1/4 size-[500px] rounded-full bg-linear-to-br from-indigo-400/15 via-purple-300/10 to-transparent blur-3xl" />
+        <div className="absolute top-1/3 -left-20 size-[450px] rounded-full bg-linear-to-tr from-teal-300/15 via-emerald-200/10 to-transparent blur-3xl" />
+        <div className="absolute bottom-10 right-10 size-[400px] rounded-full bg-linear-to-tl from-amber-300/15 via-orange-200/10 to-transparent blur-3xl" />
+      </div>
+
+      <TopBar onMenu={() => setDrawerOpen(true)} onOpenCommandPalette={() => setCommandPaletteOpen(true)} />
       <Sidebar />
       <MobileDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
-      <main key={location.pathname} className="min-w-0 pb-24 lg:ml-60 lg:pb-12">
+      <main key={location.pathname} className="relative z-10 min-w-0 pb-24 lg:ml-60 lg:pb-12">
         <div className="mx-auto min-w-0 max-w-[1440px] px-4 py-6 sm:px-6 sm:py-8 lg:px-8 xl:px-10">
           {children}
         </div>

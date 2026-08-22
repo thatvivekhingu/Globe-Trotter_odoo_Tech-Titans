@@ -4,7 +4,7 @@ import { useDashboardData } from '../../hooks/useTripSelectors'
 import { useTripWise } from '../../state/useTripWise'
 import { formatCurrency, formatDateRange, formatRelativeDays } from '../../lib/formatters'
 import { Badge } from '../../components/ui/Badge'
-import { Button } from '../../components/ui/Button'
+import { Button, MacWindowControls } from '../../components/ui/Button'
 import { Card, SectionHeading } from '../../components/ui/Card'
 import { EmptyState } from '../../components/ui/Feedback'
 import { ImageWithFallback } from '../../components/ui/ImageWithFallback'
@@ -51,10 +51,11 @@ export function DashboardPage() {
   return (
     <div className="space-y-9">
       {/* 1. Live Flight & Reservation Ticker with Live Ticking Countdown */}
-      <div className="bg-linear-to-r from-slate-950 via-slate-900 to-indigo-950 text-white py-3.5 px-5 rounded-3xl flex flex-wrap items-center justify-between gap-4 shadow-xl border border-slate-800">
+      <div className="bg-linear-to-r from-slate-950 via-slate-900 to-indigo-950 text-white py-3.5 px-5 rounded-3xl flex flex-wrap items-center justify-between gap-4 shadow-xl border border-slate-800/80 backdrop-blur-xl">
         <div className="flex flex-wrap items-center gap-3 text-xs font-bold">
+          <MacWindowControls className="mr-1 hidden sm:flex" />
           <span className="bg-[#10B981] text-[#0F172A] px-2.5 py-0.5 rounded-full text-[10px] uppercase font-extrabold tracking-wider animate-pulse">
-            Live Ticket
+            Live Flight
           </span>
           <span className="text-slate-200">
             ✈️ IndiGo 6E-5342 (BOM ➔ GOI) · Gate 14B · Seat 14A · PNR: <span className="font-mono text-[#B4F056]">GT-7K9A2X</span>
@@ -71,7 +72,7 @@ export function DashboardPage() {
       </div>
 
       {/* Weather Advisory & Smart Packing Alert */}
-      <div className="p-3.5 px-5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-900 flex flex-wrap items-center justify-between gap-3 text-xs">
+      <div className="p-3.5 px-5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-900 flex flex-wrap items-center justify-between gap-3 text-xs backdrop-blur-md">
         <div className="flex items-center gap-2.5 font-medium">
           <span className="text-base">🌦️</span>
           <span><strong>Destination Advisory (Goa):</strong> Light coastal showers expected in afternoon (28°C). Pack a quick-dry windcheater and waterproof sandals.</span>
@@ -84,7 +85,7 @@ export function DashboardPage() {
       {/* 2. Top Welcome Header */}
       <section className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
         <div>
-          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-indigo-50 border border-indigo-200 text-[11px] font-bold text-[#4F46E5] mb-2.5">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-indigo-50/90 border border-indigo-200/80 text-[11px] font-bold text-[#4F46E5] mb-2.5 backdrop-blur-md">
             <Calendar size={13} />
             Saturday, 22 August 2026 · AI Travel Copilot Active
           </div>
@@ -97,10 +98,10 @@ export function DashboardPage() {
         </div>
 
         <div className="flex items-center gap-2.5">
-          <Button asChild variant="secondary" icon={<Sparkles size={15} />} className="rounded-full shadow-2xs">
+          <Button asChild variant="secondary" icon={<Sparkles size={15} />} className="rounded-full shadow-xs">
             <Link to="/recommendations">AI Trip Planner</Link>
           </Button>
-          <Button asChild icon={<Plus size={15} />} className="rounded-full shadow-sm bg-gradient-to-r from-indigo-600 to-violet-600 text-white hover:from-indigo-700 hover:to-violet-700">
+          <Button asChild icon={<Plus size={15} />} className="rounded-full shadow-md bg-linear-to-r from-indigo-600 to-violet-600 text-white hover:from-indigo-700 hover:to-violet-700">
             <Link to="/trips/new">Plan a new trip</Link>
           </Button>
         </div>
@@ -112,13 +113,13 @@ export function DashboardPage() {
           <Link
             key={act.label}
             to={act.to}
-            className="group relative p-4 rounded-3xl bg-white border border-slate-200/90 shadow-2xs hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between overflow-hidden"
+            className="group relative p-4 rounded-3xl bg-white/80 backdrop-blur-xl border border-white/90 shadow-2xs hover:bg-white hover:shadow-xl hover:-translate-y-1.5 transition-all duration-200 flex flex-col justify-between overflow-hidden"
           >
             <div className="flex items-center justify-between">
-              <div className={`size-10 rounded-2xl bg-gradient-to-br ${act.color} text-white flex items-center justify-center shadow-sm`}>
+              <div className={`size-10 rounded-2xl bg-linear-to-br ${act.color} text-white flex items-center justify-center shadow-md`}>
                 <act.icon size={18} />
               </div>
-              <span className="text-[9px] font-extrabold uppercase tracking-wider bg-slate-100 text-slate-700 px-2 py-0.5 rounded-full group-hover:bg-[#4F46E5] group-hover:text-white transition-colors">
+              <span className="text-[9px] font-extrabold uppercase tracking-wider bg-slate-100/90 text-slate-700 px-2 py-0.5 rounded-full group-hover:bg-[#4F46E5] group-hover:text-white transition-colors">
                 {act.badge}
               </span>
             </div>
