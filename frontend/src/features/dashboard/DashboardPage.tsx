@@ -10,17 +10,35 @@ import { EmptyState } from '../../components/ui/Feedback'
 import { ImageWithFallback } from '../../components/ui/ImageWithFallback'
 import { TripMapView } from '../../components/map/TripMapView'
 
+import { LiveWeatherWidget } from '../../components/weather/LiveWeatherWidget'
+
 export function DashboardPage() {
   const { currentUser, state } = useTripWise()
   const { upcoming, recent, recommendedCities } = useDashboardData()
   const nextTrip = upcoming[0]
 
-  const budgetLimit = nextTrip?.budget.budgetLimit || 65000
+  const budgetLimit = nextTrip?.budget.budgetLimit || 75000
   const budgetSpent = nextTrip?.budget.total || 45700
   const percentBudget = Math.min(100, Math.round((budgetSpent / budgetLimit) * 100))
 
+  const destinationCity = state.db.cities.find(c => c.id === nextTrip?.stops[0]?.cityId) || state.db.cities[0]
+
   return (
     <div className="space-y-9">
+      {/* 1. Live Flight & Departure Status Ticker */}
+      <div className="bg-[#0F172A] text-white py-2.5 px-4 rounded-2xl flex flex-wrap items-center justify-between gap-3 shadow-md border border-slate-800">
+        <div className="flex items-center gap-2.5 text-xs font-bold">
+          <span className="bg-[#10B981] text-[#0F172A] px-2 py-0.5 rounded-md text-[10px] uppercase font-extrabold tracking-wider">
+            Live Flight
+          </span>
+          <span className="text-slate-200">IndiGo 6E-5342 (BOM ➔ GOI) · Gate 14B · Status: <span className="text-[#B4F056]">On Time</span> · Boarding 06:45 AM</span>
+        </div>
+        <div className="flex items-center gap-3 text-xs text-slate-400">
+          <span className="hidden sm:inline">🏨 Taj Fort Aguada (Ocean View Suite) Confirmed</span>
+          <Link to="/booking" className="text-[#B4F056] font-bold hover:underline">View Ticket ➔</Link>
+        </div>
+      </div>
+
       {/* Top Welcome Header */}
       <section className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
         <div>
@@ -29,10 +47,10 @@ export function DashboardPage() {
             Saturday, 22 August 2026
           </div>
           <h1 className="font-display text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl">
-            Welcome back, {currentUser?.name.split(' ')[0] || 'traveller'}.
+            Welcome back, {currentUser?.name.split(' ')[0] || 'Priyanka'}.
           </h1>
           <p className="mt-2 max-w-xl text-sm text-slate-500 font-normal">
-            A little structure for the journey ahead, and plenty of room for the unexpected.
+            Your real-time travel command center with live weather, synced itineraries, and smart expense tracking.
           </p>
         </div>
 
@@ -152,6 +170,9 @@ export function DashboardPage() {
                       <span>Limit: {formatCurrency(budgetLimit)}</span>
                     </div>
                   </div>
+
+                  {/* Destination Weather Forecast */}
+                  <LiveWeatherWidget city={destinationCity} />
                 </div>
               </div>
 

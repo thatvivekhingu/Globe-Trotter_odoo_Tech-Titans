@@ -458,64 +458,98 @@ export function TourPackagesPage() {
 
       {/* Booking Checkout Modal */}
       {selectedPackage && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
-          <Card className="w-full max-w-lg p-6 sm:p-7 rounded-3xl bg-white shadow-2xl border border-slate-200 space-y-5">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 overflow-y-auto">
+          <Card className="w-full max-w-xl p-6 sm:p-7 rounded-3xl bg-white shadow-2xl border border-slate-200 space-y-5 my-auto max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-orange-600">Package Reservation</span>
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-orange-600">Verified Experiential Package</span>
                 <h3 className="font-display text-xl font-bold text-slate-900">{selectedPackage.title}</h3>
               </div>
               <button
                 type="button"
                 onClick={() => setSelectedPackage(null)}
-                className="text-slate-400 hover:text-slate-700"
+                className="text-slate-400 hover:text-slate-700 text-sm font-bold"
               >
                 ✕
               </button>
             </div>
 
+            {/* Itinerary Schedule Overview */}
             <div className="p-4 rounded-2xl bg-orange-50/70 border border-orange-200 space-y-2 text-xs">
-              <div className="flex justify-between">
+              <div className="flex justify-between font-bold">
                 <span className="text-slate-600">Duration:</span>
-                <span className="font-bold text-slate-900">{selectedPackage.duration}</span>
+                <span className="text-slate-900">{selectedPackage.duration}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-600">Destinations:</span>
+                <span className="text-slate-600">Route:</span>
                 <span className="font-semibold text-slate-800">{selectedPackage.destination}</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-slate-600">Discounted Tour Fare:</span>
-                <span className="font-display text-lg font-bold text-orange-600">{formatCurrency(selectedPackage.discountPrice)}</span>
+              <div className="flex justify-between items-center pt-1 border-t border-orange-200/60">
+                <span className="text-slate-600">Special Offer Fare:</span>
+                <span className="font-display text-xl font-bold text-orange-600">{formatCurrency(selectedPackage.discountPrice)}</span>
               </div>
             </div>
 
+            {/* Day-Wise Itinerary Accordion List */}
             <div className="space-y-2">
-              <label className="block text-xs font-bold text-slate-700">Lead Traveler Details</label>
+              <p className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                📅 Day-by-Day Curated Schedule:
+              </p>
+              <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
+                {selectedPackage.highlights.map((highlight, idx) => (
+                  <div key={idx} className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs flex gap-2.5 items-start">
+                    <span className="size-5 rounded-full bg-orange-500 text-white font-extrabold text-[10px] flex items-center justify-center shrink-0">
+                      {idx + 1}
+                    </span>
+                    <div>
+                      <p className="font-bold text-slate-900">Day {idx + 1}: {highlight}</p>
+                      <p className="text-[11px] text-slate-500 mt-0.5">Includes 4-Star stay, chauffeur transfer & licensed English/Hindi guide.</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Inclusions Checkmarks */}
+            <div className="space-y-1.5">
+              <p className="text-[11px] font-bold text-slate-700">What's Included in Package:</p>
+              <div className="grid grid-cols-2 gap-1.5 text-[11px] text-slate-600">
+                {selectedPackage.inclusions.map((inc, i) => (
+                  <span key={i} className="flex items-center gap-1 bg-emerald-50 text-emerald-800 p-1.5 rounded-lg font-medium">
+                    ✓ {inc}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            {/* Lead Traveler */}
+            <div className="space-y-2">
+              <label className="block text-xs font-bold text-slate-700">Lead Traveler Information</label>
               <div className="grid grid-cols-2 gap-3">
                 <input
                   type="text"
-                  defaultValue="Aarav Mehta"
+                  defaultValue="Priyanka Lachhani"
                   placeholder="Full Name"
-                  className="px-3 py-2 rounded-xl border border-slate-200 text-xs w-full"
+                  className="px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs w-full bg-slate-50 font-semibold text-slate-900"
                 />
                 <input
                   type="tel"
                   defaultValue="+91 9876543210"
-                  placeholder="Phone Number"
-                  className="px-3 py-2 rounded-xl border border-slate-200 text-xs w-full"
+                  placeholder="WhatsApp / Phone"
+                  className="px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs w-full bg-slate-50 font-semibold text-slate-900"
                 />
               </div>
             </div>
 
-            <div className="flex gap-2 pt-2">
-              <Button variant="secondary" className="flex-1 rounded-full text-xs" onClick={() => setSelectedPackage(null)}>
-                Cancel
+            <div className="flex gap-2.5 pt-2">
+              <Button variant="secondary" className="flex-1 rounded-full text-xs font-bold" onClick={() => setSelectedPackage(null)}>
+                Close
               </Button>
               <Button
-                className="flex-1 rounded-full text-xs font-bold bg-gradient-to-r from-orange-500 to-amber-500 text-white"
+                className="flex-1 rounded-full text-xs font-bold bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white shadow-md shadow-orange-500/20"
                 onClick={() => handleInstantBook(selectedPackage)}
               >
-                Confirm & Pay ({formatCurrency(selectedPackage.discountPrice)})
+                Instant Confirm ({formatCurrency(selectedPackage.discountPrice)})
               </Button>
             </div>
           </Card>
