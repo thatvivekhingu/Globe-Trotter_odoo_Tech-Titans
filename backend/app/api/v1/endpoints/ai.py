@@ -33,6 +33,11 @@ from app.services.rag import format_context, retrieve_travel_context
 router = APIRouter()
 
 
+@router.get('/status')
+def ai_status() -> dict[str, str | bool]:
+    return {'configured': bool(settings.groq_api_key), 'provider': 'groq', 'model': settings.groq_model}
+
+
 class RecommendationRequest(BaseModel):
     starting_city: str = Field(default='Ahmedabad', description='Origin city')
     days: int = Field(default=5, ge=1, le=30)

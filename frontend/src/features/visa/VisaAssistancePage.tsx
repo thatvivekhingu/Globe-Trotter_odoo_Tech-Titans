@@ -25,7 +25,7 @@ const VISA_CATALOG: VisaCountry[] = [
     flag: '🇹🇭',
     type: 'e-Visa',
     validity: '90 days',
-    fees: 0,
+    fees: 2490,
     processingTime: '2 hours',
     guaranteedDelivery: 'Within 24 Hours',
     requiredDocs: ['Passport (6 mo validity)', 'Confirmed Return Flight', 'Hotel Booking Voucher'],
@@ -47,7 +47,7 @@ const VISA_CATALOG: VisaCountry[] = [
     flag: '🇱🇰',
     type: 'e-Visa',
     validity: '180 days',
-    fees: 0,
+    fees: 1850,
     processingTime: '1 day',
     guaranteedDelivery: '25 Aug 2026',
     requiredDocs: ['Passport Bio Page', 'Return Ticket'],
@@ -58,7 +58,7 @@ const VISA_CATALOG: VisaCountry[] = [
     flag: '🇲🇾',
     type: 'e-Visa',
     validity: '30 days',
-    fees: 0,
+    fees: 1950,
     processingTime: 'Instant',
     guaranteedDelivery: 'Within 3 Hours',
     requiredDocs: ['Passport Bio Page', 'Boarding Pass'],
@@ -155,9 +155,9 @@ const VISA_CATALOG: VisaCountry[] = [
   {
     country: 'Maldives',
     flag: '🇲🇻',
-    type: 'Visa Free',
+    type: 'Visa on Arrival',
     validity: '30 days',
-    fees: 0,
+    fees: 950,
     processingTime: 'On Arrival',
     guaranteedDelivery: 'Instant at Airport',
     requiredDocs: ['IMUGA Declaration Form', 'Pre-paid Hotel Booking'],
@@ -166,9 +166,9 @@ const VISA_CATALOG: VisaCountry[] = [
   {
     country: 'Mauritius',
     flag: '🇲🇺',
-    type: 'Visa Free',
+    type: 'Visa on Arrival',
     validity: '60 days',
-    fees: 0,
+    fees: 1200,
     processingTime: 'On Arrival',
     guaranteedDelivery: 'Instant at Airport',
     requiredDocs: ['Passport', 'Return Ticket', 'Hotel Voucher'],
@@ -179,8 +179,8 @@ const VISA_CATALOG: VisaCountry[] = [
     flag: '🇳🇵',
     type: 'Visa Free',
     validity: 'Unlimited',
-    fees: 0,
-    processingTime: 'Freedom of Movement',
+    fees: 450,
+    processingTime: 'Instant Clearance',
     guaranteedDelivery: 'Voter ID / Passport Entry',
     requiredDocs: ['Indian Passport or Voter ID Card'],
     category: 'asia',
@@ -313,7 +313,7 @@ export function VisaAssistancePage() {
                 <div className="flex justify-between items-center border-t border-slate-200/60 pt-1.5">
                   <span className="text-slate-900 font-bold">Government Fee:</span>
                   <span className="text-sm font-display font-bold text-[#4F46E5]">
-                    {v.fees === 0 ? 'Free / ₹0' : formatCurrency(v.fees)}
+                    {formatCurrency(v.fees)}
                   </span>
                 </div>
               </div>

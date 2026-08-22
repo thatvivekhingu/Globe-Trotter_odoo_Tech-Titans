@@ -1,4 +1,4 @@
-import { ArrowUpRight, Calendar, CalendarDays, ChevronRight, MapPin, Plus, Sparkles, TrendingUp, WalletCards } from 'lucide-react'
+import { ArrowRight, ArrowUpRight, Building2, Calendar, CalendarDays, ChevronRight, Flame, MapPin, Plane, Plus, ShieldCheck, Sparkles, WalletCards } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useDashboardData } from '../../hooks/useTripSelectors'
 import { useTripWise } from '../../state/useTripWise'
@@ -9,7 +9,7 @@ import { Card, SectionHeading } from '../../components/ui/Card'
 import { EmptyState } from '../../components/ui/Feedback'
 import { ImageWithFallback } from '../../components/ui/ImageWithFallback'
 import { TripMapView } from '../../components/map/TripMapView'
-
+import { useState, useEffect } from 'react'
 import { LiveWeatherWidget } from '../../components/weather/LiveWeatherWidget'
 
 export function DashboardPage() {
@@ -23,34 +23,76 @@ export function DashboardPage() {
 
   const destinationCity = state.db.cities.find(c => c.id === nextTrip?.stops[0]?.cityId) || state.db.cities[0]
 
+  // Real-time ticking countdown
+  const [timeLeft, setTimeLeft] = useState({ days: 3, hours: 14, mins: 28, secs: 42 })
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev.secs > 0) return { ...prev, secs: prev.secs - 1 }
+        if (prev.mins > 0) return { ...prev, mins: prev.mins - 1, secs: 59 }
+        if (prev.hours > 0) return { ...prev, hours: prev.hours - 1, mins: 59, secs: 59 }
+        if (prev.days > 0) return { ...prev, days: prev.days - 1, hours: 23, mins: 59, secs: 59 }
+        return prev
+      })
+    }, 1000)
+    return () => clearInterval(timer)
+  }, [])
+
+  const quickPillActions = [
+    { label: 'AI Trip Architect', to: '/recommendations', icon: Sparkles, color: 'from-indigo-600 to-violet-600', badge: 'Groq 3.3' },
+    { label: 'Curated Tour Packages', to: '/packages', icon: Flame, color: 'from-orange-500 to-amber-500', badge: '40% Off' },
+    { label: 'Live Bookings', to: '/booking', icon: Plane, color: 'from-blue-600 to-cyan-600', badge: 'Razorpay' },
+    { label: 'Receipt OCR Scanner', to: '/trips/trip-goa-mmt/budget', icon: WalletCards, color: 'from-emerald-600 to-teal-600', badge: 'Neural' },
+    { label: 'Visa & Insurance', to: '/forex', icon: ShieldCheck, color: 'from-slate-800 to-slate-900', badge: 'Embassy' },
+    { label: 'Odoo ERP Sync', to: '/odoo', icon: Building2, color: 'from-purple-700 to-indigo-900', badge: 'Enterprise' },
+  ]
+
   return (
     <div className="space-y-9">
-      {/* 1. Live Flight & Departure Status Ticker */}
-      <div className="bg-[#0F172A] text-white py-2.5 px-4 rounded-2xl flex flex-wrap items-center justify-between gap-3 shadow-md border border-slate-800">
-        <div className="flex items-center gap-2.5 text-xs font-bold">
-          <span className="bg-[#10B981] text-[#0F172A] px-2 py-0.5 rounded-md text-[10px] uppercase font-extrabold tracking-wider">
-            Live Flight
+      {/* 1. Live Flight & Reservation Ticker with Live Ticking Countdown */}
+      <div className="bg-linear-to-r from-slate-950 via-slate-900 to-indigo-950 text-white py-3.5 px-5 rounded-3xl flex flex-wrap items-center justify-between gap-4 shadow-xl border border-slate-800">
+        <div className="flex flex-wrap items-center gap-3 text-xs font-bold">
+          <span className="bg-[#10B981] text-[#0F172A] px-2.5 py-0.5 rounded-full text-[10px] uppercase font-extrabold tracking-wider animate-pulse">
+            Live Ticket
           </span>
-          <span className="text-slate-200">IndiGo 6E-5342 (BOM ➔ GOI) · Gate 14B · Status: <span className="text-[#B4F056]">On Time</span> · Boarding 06:45 AM</span>
+          <span className="text-slate-200">
+            ✈️ IndiGo 6E-5342 (BOM ➔ GOI) · Gate 14B · Seat 14A · PNR: <span className="font-mono text-[#B4F056]">GT-7K9A2X</span>
+          </span>
         </div>
-        <div className="flex items-center gap-3 text-xs text-slate-400">
-          <span className="hidden sm:inline">🏨 Taj Fort Aguada (Ocean View Suite) Confirmed</span>
-          <Link to="/booking" className="text-[#B4F056] font-bold hover:underline">View Ticket ➔</Link>
+
+        {/* Dynamic Countdown Clock */}
+        <div className="flex items-center gap-2 font-mono text-xs bg-black/40 px-3.5 py-1.5 rounded-2xl border border-white/10 text-white">
+          <span className="text-slate-400 font-sans text-[11px] font-bold">Takeoff In:</span>
+          <span className="text-[#B4F056] font-bold">
+            {String(timeLeft.days).padStart(2, '0')}d : {String(timeLeft.hours).padStart(2, '0')}h : {String(timeLeft.mins).padStart(2, '0')}m : {String(timeLeft.secs).padStart(2, '0')}s
+          </span>
         </div>
       </div>
 
-      {/* Top Welcome Header */}
+      {/* Weather Advisory & Smart Packing Alert */}
+      <div className="p-3.5 px-5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-900 flex flex-wrap items-center justify-between gap-3 text-xs">
+        <div className="flex items-center gap-2.5 font-medium">
+          <span className="text-base">🌦️</span>
+          <span><strong>Destination Advisory (Goa):</strong> Light coastal showers expected in afternoon (28°C). Pack a quick-dry windcheater and waterproof sandals.</span>
+        </div>
+        <Link to="/packing" className="text-[#4F46E5] font-bold hover:underline shrink-0">
+          Open Packing Checklist ➔
+        </Link>
+      </div>
+
+      {/* 2. Top Welcome Header */}
       <section className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
         <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 border border-slate-200/80 text-[11px] font-semibold text-slate-600 mb-2.5">
-            <Calendar size={13} className="text-[#4F46E5]" />
-            Saturday, 22 August 2026
+          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-indigo-50 border border-indigo-200 text-[11px] font-bold text-[#4F46E5] mb-2.5">
+            <Calendar size={13} />
+            Saturday, 22 August 2026 · AI Travel Copilot Active
           </div>
           <h1 className="font-display text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl">
             Welcome back, {currentUser?.name.split(' ')[0] || 'Priyanka'}.
           </h1>
           <p className="mt-2 max-w-xl text-sm text-slate-500 font-normal">
-            Your real-time travel command center with live weather, synced itineraries, and smart expense tracking.
+            Your real-time travel intelligence workspace with Groq LLaMA 3.3 AI, neural OCR expense tracking, and live GIS maps.
           </p>
         </div>
 
@@ -58,13 +100,36 @@ export function DashboardPage() {
           <Button asChild variant="secondary" icon={<Sparkles size={15} />} className="rounded-full shadow-2xs">
             <Link to="/recommendations">AI Trip Planner</Link>
           </Button>
-          <Button asChild icon={<Plus size={15} />} className="rounded-full shadow-sm">
+          <Button asChild icon={<Plus size={15} />} className="rounded-full shadow-sm bg-gradient-to-r from-indigo-600 to-violet-600 text-white hover:from-indigo-700 hover:to-violet-700">
             <Link to="/trips/new">Plan a new trip</Link>
           </Button>
         </div>
       </section>
 
-      {/* Hero Next Trip & Pulse Cards */}
+      {/* 3. Quick-Action Floating Cards Bar */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        {quickPillActions.map((act) => (
+          <Link
+            key={act.label}
+            to={act.to}
+            className="group relative p-4 rounded-3xl bg-white border border-slate-200/90 shadow-2xs hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between overflow-hidden"
+          >
+            <div className="flex items-center justify-between">
+              <div className={`size-10 rounded-2xl bg-gradient-to-br ${act.color} text-white flex items-center justify-center shadow-sm`}>
+                <act.icon size={18} />
+              </div>
+              <span className="text-[9px] font-extrabold uppercase tracking-wider bg-slate-100 text-slate-700 px-2 py-0.5 rounded-full group-hover:bg-[#4F46E5] group-hover:text-white transition-colors">
+                {act.badge}
+              </span>
+            </div>
+            <p className="font-display text-xs font-bold text-slate-800 mt-4 group-hover:text-[#4F46E5] transition-colors leading-snug">
+              {act.label}
+            </p>
+          </Link>
+        ))}
+      </div>
+
+      {/* 4. Hero Next Trip & Pulse Cards */}
       {nextTrip ? (
         <>
           <section className="grid gap-6 xl:grid-cols-[minmax(0,1.7fr)_minmax(22rem,0.9fr)]">
@@ -99,86 +164,57 @@ export function DashboardPage() {
                     {nextTrip.trip.description}
                   </p>
 
-                  <div className="pt-3 flex items-center gap-3">
-                    <Button asChild variant="secondary" className="rounded-full bg-white text-slate-900 hover:bg-slate-100 font-bold text-xs" icon={<ArrowUpRight size={15} />}>
-                      <Link to={`/trips/${nextTrip.trip.id}/itinerary`}>Open Itinerary</Link>
+                  <div className="pt-3 flex flex-wrap items-center gap-3">
+                    <Button asChild className="rounded-full bg-[#B4F056] text-[#0F172A] hover:bg-[#a3df46] font-bold text-xs shadow-md">
+                      <Link to={`/trips/${nextTrip.trip.id}/itinerary`}>
+                        Open Itinerary Workspace <ArrowRight size={14} className="ml-1" />
+                      </Link>
                     </Button>
-                    <Button asChild variant="ghost" className="rounded-full text-white hover:bg-white/20 text-xs">
-                      <Link to={`/trips/${nextTrip.trip.id}/builder`}>Edit Route</Link>
+                    <Button asChild variant="ghost" className="rounded-full bg-white/10 hover:bg-white/20 text-white text-xs border border-white/20 backdrop-blur-xs">
+                      <Link to={`/trips/${nextTrip.trip.id}/budget`}>
+                        <WalletCards size={14} className="mr-1.5" /> Budget Ledger
+                      </Link>
                     </Button>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Trip Pulse Card */}
-            <Card className="flex flex-col justify-between border border-slate-200/80 shadow-md p-6 sm:p-7 bg-white">
-              <div>
-                <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-                  <div className="flex items-center gap-2">
-                    <div className="size-8 rounded-lg bg-indigo-50 text-[#4F46E5] flex items-center justify-center">
-                      <TrendingUp size={18} />
-                    </div>
-                    <div>
-                      <p className="eyebrow">Trip Pulse</p>
-                      <h3 className="font-display text-lg font-bold text-slate-900 leading-tight">Live Analytics</h3>
-                    </div>
+            {/* Side Pulse & Weather Widget */}
+            <Card className="flex flex-col justify-between p-6 sm:p-7 rounded-3xl border border-slate-200 bg-white shadow-xs">
+              <div className="space-y-5">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-3.5">
+                  <div>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Live Destination Pulse</span>
+                    <h3 className="font-display text-lg font-bold text-slate-900">{destinationCity?.name || 'Goa'}, India</h3>
                   </div>
-                  <Sparkles size={18} className="text-[#4F46E5]" />
+                  <span className="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full">
+                    {nextTrip.stops.length} Stops Active
+                  </span>
                 </div>
 
-                <div className="mt-6 space-y-4">
-                  {/* Days metric */}
-                  <div className="p-3.5 rounded-2xl bg-indigo-50/60 border border-indigo-100/80 flex items-center justify-between">
-                    <div>
-                      <p className="text-[11px] font-bold uppercase tracking-wider text-indigo-900/60">Days to Departure</p>
-                      <p className="font-display text-2xl font-bold text-indigo-950 mt-0.5">
-                        {formatRelativeDays(nextTrip.trip.startDate).replace('In ', '')}
-                      </p>
-                    </div>
-                    <span className="text-xs font-semibold text-indigo-600 bg-white px-2.5 py-1 rounded-full shadow-2xs">
-                      Confirmed
-                    </span>
+                {/* Estimated Budget Usage Progress */}
+                <div className="p-4 rounded-2xl bg-indigo-50/60 border border-indigo-100 space-y-2">
+                  <div className="flex items-center justify-between text-xs font-bold">
+                    <span className="text-slate-600">Budget Spent:</span>
+                    <span className="text-[#4F46E5] font-display text-base">{formatCurrency(budgetSpent)}</span>
                   </div>
-
-                  {/* Planned items */}
-                  <div className="p-3.5 rounded-2xl bg-emerald-50/60 border border-emerald-100/80 flex items-center justify-between">
-                    <div>
-                      <p className="text-[11px] font-bold uppercase tracking-wider text-emerald-900/60">Anchors & Activities</p>
-                      <p className="font-display text-2xl font-bold text-emerald-950 mt-0.5">
-                        {nextTrip.activities.length} Planned
-                      </p>
-                    </div>
-                    <span className="text-xs font-semibold text-emerald-700 bg-white px-2.5 py-1 rounded-full shadow-2xs">
-                      {nextTrip.stops.length} Cities
-                    </span>
+                  <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                    <div className="bg-[#4F46E5] h-full rounded-full transition-all duration-500" style={{ width: `${percentBudget}%` }} />
                   </div>
-
-                  {/* Estimated budget */}
-                  <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-100">
-                    <div className="flex items-center justify-between mb-1.5">
-                      <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Estimated Budget</p>
-                      <span className="font-display text-base font-bold text-slate-900">
-                        {formatCurrency(budgetSpent)}
-                      </span>
-                    </div>
-                    <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
-                      <div className="bg-[#4F46E5] h-full rounded-full transition-all" style={{ width: `${percentBudget}%` }} />
-                    </div>
-                    <div className="flex justify-between items-center text-[10px] font-medium text-slate-400 mt-1.5">
-                      <span>{percentBudget}% of limit used</span>
-                      <span>Limit: {formatCurrency(budgetLimit)}</span>
-                    </div>
+                  <div className="flex justify-between items-center text-[10px] text-slate-500">
+                    <span>{percentBudget}% limit consumed</span>
+                    <span>Total Limit: {formatCurrency(budgetLimit)}</span>
                   </div>
-
-                  {/* Destination Weather Forecast */}
-                  <LiveWeatherWidget city={destinationCity} />
                 </div>
+
+                {/* Satellite Weather Forecast */}
+                <LiveWeatherWidget city={destinationCity} />
               </div>
 
               <Link
                 to={`/trips/${nextTrip.trip.id}/budget`}
-                className="mt-6 flex items-center justify-between pt-4 border-t border-slate-100 text-xs font-bold text-[#4F46E5] hover:text-indigo-800 transition-colors"
+                className="mt-5 flex items-center justify-between pt-3.5 border-t border-slate-100 text-xs font-bold text-[#4F46E5] hover:text-indigo-800 transition-colors"
               >
                 <span className="flex items-center gap-1.5"><WalletCards size={15} />Open Full Budget & Splitter</span>
                 <ChevronRight size={15} />
@@ -186,7 +222,7 @@ export function DashboardPage() {
             </Card>
           </section>
 
-          {/* Interactive Route Map on Dashboard */}
+          {/* 5. Interactive Route Map on Dashboard */}
           <div className="space-y-4">
             <SectionHeading
               eyebrow="Geographical Overview"
@@ -209,7 +245,7 @@ export function DashboardPage() {
         />
       )}
 
-      {/* Recent Trips & Inspiration Grid */}
+      {/* 6. Recent Trips & Recommended Destinations Grid */}
       <section className="grid gap-8 xl:grid-cols-[minmax(0,1.3fr)_minmax(20rem,0.7fr)]">
         <div className="space-y-4">
           <SectionHeading

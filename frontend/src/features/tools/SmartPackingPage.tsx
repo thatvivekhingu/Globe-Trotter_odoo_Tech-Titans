@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { CheckCircle2, Circle, PhoneCall, Plus, ShieldAlert, Trash2 } from 'lucide-react'
+import { CheckCircle2, Circle, Luggage, PhoneCall, Plus, RotateCcw, ShieldAlert, Sparkles, Trash2 } from 'lucide-react'
 import { useTripWise } from '../../state/useTripWise'
 import { Card, SectionHeading } from '../../components/ui/Card'
 import { Button } from '../../components/ui/Button'
@@ -9,45 +9,78 @@ interface PackingItem {
   id: string
   name: string
   category: 'clothing' | 'electronics' | 'documents' | 'toiletries' | 'gear'
+  weightKg: number
   checked: boolean
   essential?: boolean
 }
 
-const defaultItems: PackingItem[] = [
-  { id: 'p1', name: 'Government ID / Passport / Driving License', category: 'documents', checked: true, essential: true },
-  { id: 'p2', name: 'Train / Flight e-Tickets & Hotel Confirmations', category: 'documents', checked: true, essential: true },
-  { id: 'p3', name: 'Smartphone & Fast Charging Adapter', category: 'electronics', checked: true, essential: true },
-  { id: 'p4', name: 'Power Bank (10,000+ mAh)', category: 'electronics', checked: false, essential: true },
-  { id: 'p5', name: 'Prescription Medicines & First-Aid Bandages', category: 'toiletries', checked: false, essential: true },
-  { id: 'p6', name: 'Sunscreen (SPF 50+) & Lip Balm', category: 'toiletries', checked: false },
-  { id: 'p7', name: 'Comfortable Walking / Trail Shoes', category: 'clothing', checked: false, essential: true },
-  { id: 'p8', name: 'Light Cotton / Quick-dry T-Shirts', category: 'clothing', checked: false },
-  { id: 'p9', name: 'Thermal Layer / Light Jacket (Evenings)', category: 'clothing', checked: false },
-  { id: 'p10', name: 'Reusable Water Bottle & Hydration Flask', category: 'gear', checked: false },
-  { id: 'p11', name: 'Compact Rain Poncho / Umbrella', category: 'gear', checked: false },
-  { id: 'p12', name: 'Universal Travel Adapter / Earbuds', category: 'electronics', checked: false },
-]
+const PRESET_PACKS: Record<string, { label: string; icon: string; items: PackingItem[] }> = {
+  goa: {
+    label: 'Goa Beach & Cruise',
+    icon: '🏖️',
+    items: [
+      { id: 'g1', name: 'Government ID / Driving License', category: 'documents', weightKg: 0.1, checked: true, essential: true },
+      { id: 'g2', name: 'Goa Flight & Taj Fort Aguada Voucher', category: 'documents', weightKg: 0.1, checked: true, essential: true },
+      { id: 'g3', name: 'Swimwear, Boardshorts & Beach Towel', category: 'clothing', weightKg: 0.8, checked: false, essential: true },
+      { id: 'g4', name: 'Sunscreen (SPF 50+ PA++++) & Aftersun Gel', category: 'toiletries', weightKg: 0.4, checked: false, essential: true },
+      { id: 'g5', name: 'Waterproof Phone Pouch for Scuba / Watersports', category: 'electronics', weightKg: 0.1, checked: false },
+      { id: 'g6', name: 'Polarized UV Sunglasses & Fedora Hat', category: 'clothing', weightKg: 0.3, checked: false },
+      { id: 'g7', name: 'Breathable Linen Shirts & Shorts (4 sets)', category: 'clothing', weightKg: 1.4, checked: false },
+      { id: 'g8', name: 'Flip-Flops & Casual Deck Shoes', category: 'clothing', weightKg: 0.9, checked: false },
+      { id: 'g9', name: 'Mosquito Repellent Spray & Ointment', category: 'toiletries', weightKg: 0.2, checked: false },
+      { id: 'g10', name: 'Power Bank 20,000mAh & Fast Charger', category: 'electronics', weightKg: 0.5, checked: false, essential: true },
+    ]
+  },
+  kashmir: {
+    label: 'Kashmir & Gulmarg Snow',
+    icon: '❄️',
+    items: [
+      { id: 'k1', name: 'Aadhaar / Voter ID & Gondola Tickets', category: 'documents', weightKg: 0.1, checked: true, essential: true },
+      { id: 'k2', name: 'Down Feather Parka Jacket (-10°C rated)', category: 'clothing', weightKg: 1.8, checked: false, essential: true },
+      { id: 'k3', name: 'Merino Wool Thermal Inners (Top & Bottom)', category: 'clothing', weightKg: 0.7, checked: false, essential: true },
+      { id: 'k4', name: 'Waterproof Snow Boots with Grip Sole', category: 'clothing', weightKg: 1.6, checked: false, essential: true },
+      { id: 'k5', name: 'Fleece-lined Beanie, Neck Gaiter & Snow Gloves', category: 'clothing', weightKg: 0.4, checked: false, essential: true },
+      { id: 'k6', name: 'High-Altitude Moisturizer & Lip Butter', category: 'toiletries', weightKg: 0.3, checked: false },
+      { id: 'k7', name: 'Hand Warmer Heat Packs (Reusable)', category: 'gear', weightKg: 0.4, checked: false },
+      { id: 'k8', name: 'Action Camera / GoPro with extra cold-weather batteries', category: 'electronics', weightKg: 0.6, checked: false },
+    ]
+  },
+  dubai: {
+    label: 'Dubai & Desert Safari',
+    icon: '🏙️',
+    items: [
+      { id: 'd1', name: 'Passport (6+ Months Validity) & UAE Tourist eVisa', category: 'documents', weightKg: 0.1, checked: true, essential: true },
+      { id: 'd2', name: 'Emirates Flight & Atlantis Resort Booking', category: 'documents', weightKg: 0.1, checked: true, essential: true },
+      { id: 'd3', name: 'Multi-Currency Forex Card (AED Loaded)', category: 'documents', weightKg: 0.1, checked: true, essential: true },
+      { id: 'd4', name: 'Smart Casual Outfits (Fine Dining & Lounges)', category: 'clothing', weightKg: 1.8, checked: false },
+      { id: 'd5', name: 'Universal UK 3-Pin Travel Plug Adapter', category: 'electronics', weightKg: 0.2, checked: false, essential: true },
+      { id: 'd6', name: 'Sand-Resistant Sunglasses & Scarf for Desert Safari', category: 'gear', weightKg: 0.3, checked: false },
+      { id: 'd7', name: 'Cooling Mist Spray & Hydration Electrolytes', category: 'toiletries', weightKg: 0.4, checked: false },
+    ]
+  }
+}
 
 export function SmartPackingPage() {
   const { notify } = useTripWise()
   const [items, setItems] = useState<PackingItem[]>(() => {
-    const saved = localStorage.getItem('GLOBETROTTER_PACKING_ITEMS')
+    const saved = localStorage.getItem('GLOBETROTTER_PACKING_ITEMS_V2')
     if (saved) {
       try {
         return JSON.parse(saved)
       } catch {
-        return defaultItems
+        return PRESET_PACKS.goa.items
       }
     }
-    return defaultItems
+    return PRESET_PACKS.goa.items
   })
 
   const [activeCategory, setActiveCategory] = useState<string>('all')
   const [newItemName, setNewItemName] = useState('')
   const [newItemCategory, setNewItemCategory] = useState<PackingItem['category']>('clothing')
+  const [newItemWeight, setNewItemWeight] = useState('0.5')
 
   useEffect(() => {
-    localStorage.setItem('GLOBETROTTER_PACKING_ITEMS', JSON.stringify(items))
+    localStorage.setItem('GLOBETROTTER_PACKING_ITEMS_V2', JSON.stringify(items))
   }, [items])
 
   const toggleItem = (id: string) => {
@@ -68,6 +101,7 @@ export function SmartPackingPage() {
       id: `custom-${Date.now()}`,
       name: newItemName.trim(),
       category: newItemCategory,
+      weightKg: parseFloat(newItemWeight) || 0.5,
       checked: false,
     }
     setItems((prev) => [newItem, ...prev])
@@ -75,8 +109,27 @@ export function SmartPackingPage() {
     notify('Item added to packing list!')
   }
 
+  const handleApplyPreset = (presetKey: string) => {
+    const preset = PRESET_PACKS[presetKey]
+    if (!preset) return
+    setItems(preset.items)
+    notify(`✨ Applied ${preset.label} packing template!`)
+  }
+
+  const handlePackAll = () => {
+    setItems((prev) => prev.map((i) => ({ ...i, checked: true })))
+    notify('All items marked as packed!')
+  }
+
+  const handleResetAll = () => {
+    setItems((prev) => prev.map((i) => ({ ...i, checked: false })))
+    notify('Checklist reset.')
+  }
+
   const checkedCount = items.filter((i) => i.checked).length
   const percentPacked = items.length ? Math.round((checkedCount / items.length) * 100) : 0
+  const totalWeightKg = items.reduce((sum, item) => sum + (item.weightKg || 0.4), 0).toFixed(1)
+  const packedWeightKg = items.filter((i) => i.checked).reduce((sum, item) => sum + (item.weightKg || 0.4), 0).toFixed(1)
 
   const filteredItems = items.filter(
     (item) => activeCategory === 'all' || item.category === activeCategory
@@ -84,42 +137,81 @@ export function SmartPackingPage() {
 
   return (
     <div className="mx-auto max-w-5xl space-y-8">
-      <SectionHeading
-        eyebrow="Trip Readiness"
-        title="Smart Packing & Safety Kit"
-        description="Smart destination-aware packing checklist and instant emergency SOS contacts."
-      />
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <SectionHeading
+          eyebrow="Luggage & Safety Radar"
+          title="Smart Packing & Weight Estimator"
+          description="Weather-adaptive packing checklist, baggage allowance meter, and 24/7 SOS helpline."
+        />
+        <div className="flex items-center gap-2">
+          <Button size="sm" variant="secondary" icon={<RotateCcw size={14} />} onClick={handleResetAll}>
+            Reset
+          </Button>
+          <Button size="sm" icon={<CheckCircle2 size={14} />} onClick={handlePackAll}>
+            Pack All
+          </Button>
+        </div>
+      </div>
+
+      {/* Preset Destination Quick Selector */}
+      <div className="p-4 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2 text-xs font-bold text-slate-800">
+          <Sparkles size={16} className="text-[#4F46E5]" />
+          <span>Quick Destination Templates:</span>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {Object.entries(PRESET_PACKS).map(([key, pack]) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => handleApplyPreset(key)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-slate-100 hover:bg-slate-900 hover:text-white transition-all cursor-pointer"
+            >
+              <span>{pack.icon}</span>
+              <span>{pack.label}</span>
+            </button>
+          ))}
+        </div>
+      </div>
 
       <div className="grid gap-6 lg:grid-cols-12">
         {/* Left Column: Packing Checklist */}
         <div className="lg:col-span-8 space-y-6">
           <Card>
-            {/* Progress Header */}
-            <div className="flex flex-wrap items-center justify-between gap-4 border-b border-line pb-4">
+            {/* Progress Header with Baggage Weight Gauge */}
+            <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 pb-4">
               <div>
-                <span className="eyebrow">Packing Progress</span>
-                <h3 className="font-display text-2xl font-bold text-ink">
-                  {checkedCount} of {items.length} Items Packed ({percentPacked}%)
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Packing & Weight Status</span>
+                <h3 className="font-display text-2xl font-bold text-slate-900">
+                  {checkedCount} of {items.length} Packed ({percentPacked}%)
                 </h3>
               </div>
-              <Badge tone={percentPacked === 100 ? 'sage' : 'clay'}>
-                {percentPacked === 100 ? 'Ready to Travel!' : `${items.length - checkedCount} Remaining`}
-              </Badge>
+              <div className="flex items-center gap-3">
+                <div className="text-right">
+                  <p className="text-[10px] uppercase font-bold text-slate-400">Total Luggage Weight</p>
+                  <p className="font-display text-lg font-bold text-slate-900 flex items-center justify-end gap-1">
+                    <Luggage size={16} className="text-indigo-600" /> {packedWeightKg} / {totalWeightKg} kg
+                  </p>
+                </div>
+                <Badge tone={percentPacked === 100 ? 'sage' : 'clay'}>
+                  {percentPacked === 100 ? '✓ Ready to Fly' : `${items.length - checkedCount} Remaining`}
+                </Badge>
+              </div>
             </div>
 
             {/* Quick Add Form */}
-            <form onSubmit={addItem} className="mt-4 flex gap-2">
+            <form onSubmit={addItem} className="mt-4 flex flex-wrap gap-2">
               <input
                 type="text"
                 value={newItemName}
                 onChange={(e) => setNewItemName(e.target.value)}
-                placeholder="+ Add personal item (e.g. Swim Goggles, Drone)"
-                className="flex-1 px-4 py-2 rounded-full border border-line text-sm focus:outline-none focus:ring-2 focus:ring-[#4F46E5]"
+                placeholder="+ Add personal item (e.g. Scuba Mask, Drone, Jacket)"
+                className="flex-1 min-w-[200px] px-4 py-2.5 rounded-2xl border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-[#4F46E5] bg-slate-50 font-medium"
               />
               <select
                 value={newItemCategory}
                 onChange={(e) => setNewItemCategory(e.target.value as any)}
-                className="px-3 py-2 rounded-full border border-line text-xs bg-white"
+                className="px-3 py-2 rounded-2xl border border-slate-200 text-xs bg-white font-semibold"
               >
                 <option value="clothing">Clothing</option>
                 <option value="electronics">Electronics</option>
@@ -127,7 +219,18 @@ export function SmartPackingPage() {
                 <option value="toiletries">Toiletries</option>
                 <option value="gear">Gear</option>
               </select>
-              <Button type="submit" size="sm" icon={<Plus size={15} />}>Add</Button>
+              <input
+                type="number"
+                step="0.1"
+                min="0.1"
+                max="30"
+                value={newItemWeight}
+                onChange={(e) => setNewItemWeight(e.target.value)}
+                placeholder="0.5 kg"
+                className="w-20 px-3 py-2 rounded-2xl border border-slate-200 text-xs bg-white font-semibold text-center"
+                title="Estimated weight in kg"
+              />
+              <Button type="submit" size="sm" icon={<Plus size={15} />} className="rounded-2xl">Add Item</Button>
             </form>
 
             {/* Category Filter Tabs */}

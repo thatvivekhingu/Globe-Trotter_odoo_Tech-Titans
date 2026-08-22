@@ -21,7 +21,7 @@ class Settings(BaseSettings):
     cors_origins: str = 'http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000'
 
     groq_api_key: str = ''
-    groq_model: str = 'openai/gpt-oss-120b'
+    groq_model: str = 'llama-3.3-70b-versatile'
     gemini_api_key: str = ''
     gemini_model: str = 'gemini-3.6-flash'
 

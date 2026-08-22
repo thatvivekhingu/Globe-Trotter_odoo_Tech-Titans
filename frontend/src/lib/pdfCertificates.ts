@@ -226,3 +226,105 @@ export function downloadVisaApplicationPass(data: VisaPdfData) {
   // Save PDF
   doc.save(`GlobeTrotter_Visa_Pass_${data.applicationRef}.pdf`)
 }
+
+export interface TripItineraryPdfData {
+  tripName: string
+  destination: string
+  dates: string
+  travelers: number
+  budgetLimit: string
+  stops: Array<{
+    city: string
+    dates: string
+    activities: Array<{ name: string; time: string; cost: string }>
+  }>
+}
+
+export function downloadTripItineraryPdf(data: TripItineraryPdfData) {
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
+
+  // Header Banner
+  doc.setFillColor(15, 23, 42) // Slate 900
+  doc.rect(0, 0, 210, 38, 'F')
+
+  doc.setTextColor(180, 240, 86) // Lime
+  doc.setFontSize(20)
+  doc.setFont('helvetica', 'bold')
+  doc.text('GLOBETROTTER', 15, 18)
+
+  doc.setTextColor(255, 255, 255)
+  doc.setFontSize(9)
+  doc.setFont('helvetica', 'normal')
+  doc.text('OFFICIAL TRAVEL ITINERARY & BOARDING BRIEF', 15, 26)
+  doc.text(`CONFIRMATION REF: GT-ITN-${Date.now().toString().slice(-6)}`, 15, 32)
+
+  // Meta Box
+  doc.setFillColor(241, 245, 249)
+  doc.roundedRect(15, 44, 180, 26, 3, 3, 'F')
+
+  doc.setTextColor(15, 23, 42)
+  doc.setFontSize(13)
+  doc.setFont('helvetica', 'bold')
+  doc.text(data.tripName, 20, 53)
+
+  doc.setFontSize(9)
+  doc.setFont('helvetica', 'normal')
+  doc.setTextColor(71, 85, 105)
+  doc.text(`Dates: ${data.dates}`, 20, 62)
+  doc.text(`Destination: ${data.destination}`, 90, 62)
+  doc.text(`Budget Target: ${data.budgetLimit}`, 145, 62)
+
+  // Day by Day Schedule
+  let y = 78
+  doc.setTextColor(15, 23, 42)
+  doc.setFontSize(11)
+  doc.setFont('helvetica', 'bold')
+  doc.text('DAY-BY-DAY ROUTE & ACTIVITY TIMELINE', 15, y)
+  y += 7
+
+  data.stops.forEach((stop, sIdx) => {
+    if (y > 260) {
+      doc.addPage()
+      y = 20
+    }
+
+    doc.setFillColor(79, 70, 229)
+    doc.rect(15, y - 4, 3, 10, 'F')
+
+    doc.setTextColor(15, 23, 42)
+    doc.setFontSize(11)
+    doc.setFont('helvetica', 'bold')
+    doc.text(`Stop ${sIdx + 1}: ${stop.city} (${stop.dates})`, 22, y + 2)
+    y += 9
+
+    stop.activities.forEach((act) => {
+      if (y > 270) {
+        doc.addPage()
+        y = 20
+      }
+
+      doc.setFillColor(248, 250, 252)
+      doc.roundedRect(22, y - 4, 173, 10, 2, 2, 'F')
+
+      doc.setFontSize(8.5)
+      doc.setFont('helvetica', 'bold')
+      doc.setTextColor(15, 23, 42)
+      doc.text(`• [${act.time}] ${act.name}`, 26, y + 2)
+
+      doc.setFont('helvetica', 'normal')
+      doc.setTextColor(79, 70, 229)
+      doc.text(act.cost, 175, y + 2)
+      y += 12
+    })
+    y += 4
+  })
+
+  // Footer Emergency Helpline
+  doc.setFillColor(15, 23, 42)
+  doc.rect(0, 282, 210, 15, 'F')
+  doc.setTextColor(255, 255, 255)
+  doc.setFontSize(8)
+  doc.text('GlobeTrotter 24x7 Global Traveler Support: +91 1800-425-0000 | Emergency SOS: 112 (India)', 15, 290)
+
+  doc.save(`GlobeTrotter_Itinerary_${data.tripName.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`)
+}

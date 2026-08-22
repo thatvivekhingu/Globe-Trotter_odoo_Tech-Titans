@@ -51,13 +51,32 @@ export function ItineraryViewPage() {
 
           <Button
             size="sm"
-            icon={<Share2 size={15} />}
+            className="bg-[#25D366] hover:bg-[#20bd5a] text-white font-bold"
             onClick={() => {
-              navigator.clipboard?.writeText(`${window.location.origin}/shared/konkan-express`)
-              notify('Share link copied to clipboard!')
+              const text = encodeURIComponent(
+                `🗺️ *${data.trip.name}*\n` +
+                `📅 *Dates:* ${formatDateRange(data.trip.startDate, data.trip.endDate)}\n` +
+                `📍 *Route:* ${data.stops.map(s => data.cityForStop(s.id)?.name).filter(Boolean).join(' · ')}\n` +
+                `💰 *Budget:* ${formatCurrency(data.budget.total)} (${data.activities.length} Planned Activities)\n\n` +
+                `👉 *View Full Interactive Itinerary:* ${window.location.origin}/trips/${data.trip.id}/itinerary`
+              )
+              window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank')
+              notify('📲 WhatsApp trip invite created!')
             }}
           >
-            Share
+            📲 WhatsApp Invite
+          </Button>
+
+          <Button
+            size="sm"
+            variant="secondary"
+            icon={<Share2 size={15} />}
+            onClick={() => {
+              navigator.clipboard?.writeText(`${window.location.origin}/trips/${data.trip.id}/itinerary`)
+              notify('Trip invite link copied to clipboard!')
+            }}
+          >
+            Copy Link
           </Button>
         </div>
       </div>
@@ -107,25 +126,33 @@ export function ItineraryViewPage() {
                 <div className="min-w-0 flex-1">
                   {activities.length ? (
                     <div className="divide-y divide-line border-y border-line">
-                      {activities.map((tripActivity) => {
+                      {activities.map((tripActivity, actIdx) => {
                         const activity = data.activityForTripActivity(tripActivity.id)
                         return activity ? (
-                          <div key={tripActivity.id} className="flex items-start gap-3 py-4">
-                            <div className="mt-1 size-2 shrink-0 rounded-full bg-clay" />
-                            <div className="min-w-0 flex-1">
-                              <div className="flex flex-wrap items-center gap-2">
-                                <h3 className="font-semibold text-sm text-ink">{activity.name}</h3>
-                                <Badge>{formatCategoryLabel(activity.category)}</Badge>
+                          <div key={tripActivity.id}>
+                            {actIdx > 0 && (
+                              <div className="py-1.5 px-3 bg-slate-50 border-l-2 border-indigo-400 my-1 text-[11px] font-semibold text-slate-500 flex items-center justify-between">
+                                <span className="flex items-center gap-1.5">🚗 ~25 mins drive via local route</span>
+                                <span className="text-slate-400">Est. Cab: ₹350 - ₹450</span>
                               </div>
-                              <p className="body-copy mt-1 text-xs">{activity.description}</p>
-                              <p className="mt-2 flex flex-wrap items-center gap-3 text-xs text-ink/50">
-                                <span className="flex items-center gap-1"><Clock3 size={12} />{formatTime(tripActivity.startTime)}</span>
-                                <span>{formatDuration(tripActivity.durationMinutes)}</span>
+                            )}
+                            <div className="flex items-start gap-3 py-3.5">
+                              <div className="mt-1 size-2 shrink-0 rounded-full bg-clay" />
+                              <div className="min-w-0 flex-1">
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <h3 className="font-semibold text-sm text-ink">{activity.name}</h3>
+                                  <Badge>{formatCategoryLabel(activity.category)}</Badge>
+                                </div>
+                                <p className="body-copy mt-1 text-xs">{activity.description}</p>
+                                <p className="mt-2 flex flex-wrap items-center gap-3 text-xs text-ink/50">
+                                  <span className="flex items-center gap-1"><Clock3 size={12} />{formatTime(tripActivity.startTime)}</span>
+                                  <span>{formatDuration(tripActivity.durationMinutes)}</span>
+                                </p>
+                              </div>
+                              <p className="shrink-0 text-xs font-semibold text-ink/60">
+                                {tripActivity.estimatedCost ? formatCurrency(tripActivity.estimatedCost) : 'Free'}
                               </p>
                             </div>
-                            <p className="shrink-0 text-xs font-semibold text-ink/60">
-                              {tripActivity.estimatedCost ? formatCurrency(tripActivity.estimatedCost) : 'Free'}
-                            </p>
                           </div>
                         ) : null
                       })}

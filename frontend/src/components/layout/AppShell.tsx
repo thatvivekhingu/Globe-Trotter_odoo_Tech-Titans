@@ -1,8 +1,10 @@
 import { BarChart3, Bell, Building2, CheckSquare, Compass, CreditCard, DollarSign, Flame, Globe, LayoutDashboard, Map, Menu, Plane, Plus, Search, Settings, Shield, Sparkles, UserCircle, WalletCards } from 'lucide-react'
-import { useState, type FormEvent, type ReactNode } from 'react'
-import { NavLink, useLocation, useNavigate } from 'react-router-dom'
+import { useState, useEffect, type ReactNode } from 'react'
+import { NavLink, useLocation } from 'react-router-dom'
 import { useTripWise } from '../../state/useTripWise'
-import { GlobeGuideChat } from '../ai/GlobeGuideChat'
+import { AiCopilotFloatingChat } from '../ai/AiCopilotFloatingChat'
+import { CommandPaletteModal } from '../navigation/CommandPaletteModal'
+import { GlobeTrotterLogo } from '../ui/GlobeTrotterLogo'
 import { Button, IconButton } from '../ui/Button'
 import { ImageWithFallback } from '../ui/ImageWithFallback'
 import { LivePresenceBar } from '../collaboration/LivePresenceBar'
@@ -63,67 +65,43 @@ function SidebarLink({ label, to, icon: Icon, badge }: { label: string; to: stri
   )
 }
 
-function TopBar({ onMenu }: { onMenu: () => void }) {
-  const navigate = useNavigate()
-  const { currentUser, remoteMode, remoteStatus } = useTripWise()
-  const [query, setQuery] = useState('')
-
-  function handleSearch(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    navigate(`/discover/cities${query.trim() ? `?q=${encodeURIComponent(query.trim())}` : ''}`)
-  }
-
-  const isLive = remoteMode === 'remote' && remoteStatus === 'ready'
+function TopBar({ onMenu, onOpenCommandPalette }: { onMenu: () => void; onOpenCommandPalette: () => void }) {
+  const { currentUser } = useTripWise()
 
   return (
     <header className="sticky top-0 z-30 border-b border-slate-200/80 bg-white/85 backdrop-blur-md">
       <div className="flex h-16 items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
         <div className="flex items-center gap-3">
-          <IconButton label="Open navigation menu" size="sm" className="lg:hidden" onClick={onMenu}>
+          <IconButton label="Open navigation" size="sm" className="lg:hidden" onClick={onMenu}>
             <Menu size={18} />
           </IconButton>
-          <NavLink to="/dashboard" aria-label="GlobeTrotter Home" className="flex items-center gap-2.5 group">
-            <div className="size-9 rounded-xl bg-[#0F172A] text-[#B4F056] flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform">
-              <Globe size={20} />
-            </div>
-            <span className="font-display text-xl font-bold tracking-tight text-slate-900">
-              GlobeTrotter<span className="text-[#4F46E5]">.</span>
-            </span>
+          <NavLink to="/dashboard" className="group">
+            <GlobeTrotterLogo size={38} />
           </NavLink>
         </div>
 
-        {/* Global Search Bar */}
-        <form onSubmit={handleSearch} role="search" className="hidden max-w-md flex-1 md:block">
-          <label className="group flex h-10 items-center gap-2.5 rounded-full border border-slate-200 bg-slate-50/80 px-4 text-xs text-slate-500 focus-within:border-slate-800 focus-within:bg-white focus-within:ring-2 focus-within:ring-slate-800/10 transition-all">
-            <Search size={15} className="text-slate-400 group-focus-within:text-slate-800" />
-            <input
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              aria-label="Search destinations, beaches, activities"
-              className="min-w-0 flex-1 bg-transparent text-xs text-slate-900 outline-none placeholder:text-slate-400"
-              placeholder="Search destinations, beaches, activities..."
-            />
-            <kbd className="hidden rounded-md border border-slate-200 bg-white px-1.5 py-0.5 text-[10px] font-semibold text-slate-400 lg:inline shadow-2xs">
-              ⌘ K
-            </kbd>
-          </label>
-        </form>
+        {/* Global Spotlight Search Trigger */}
+        <button
+          type="button"
+          onClick={onOpenCommandPalette}
+          className="hidden max-w-md flex-1 md:flex items-center justify-between h-10 rounded-full border border-slate-200/90 bg-slate-50/90 px-4 text-xs text-slate-500 hover:border-[#4F46E5] hover:bg-white transition-all text-left cursor-pointer shadow-2xs group"
+        >
+          <div className="flex items-center gap-2.5">
+            <Search size={15} className="text-slate-400 group-hover:text-[#4F46E5]" />
+            <span className="text-slate-400 font-medium">Search 30+ destinations, flights, visa, OCR...</span>
+          </div>
+          <kbd className="hidden rounded-md border border-slate-200 bg-white px-2 py-0.5 text-[10px] font-bold text-slate-600 lg:inline shadow-2xs">
+            ⌘ K
+          </kbd>
+        </button>
 
         {/* Right Nav Actions */}
         <div className="flex items-center gap-3">
           <LivePresenceBar />
 
-          {/* Dynamic Network & API Sync Badge */}
-          <div
-            title={isLive ? 'Connected to FastAPI & Odoo Live Services' : 'Running in Local State & Offline Cache Mode'}
-            className={`hidden md:flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold border transition-colors ${
-              isLive
-                ? 'bg-emerald-50 border-emerald-200/60 text-emerald-700'
-                : 'bg-indigo-50 border-indigo-200/60 text-indigo-700'
-            }`}
-          >
-            <span className={`size-2 rounded-full ${isLive ? 'bg-emerald-500 animate-pulse' : 'bg-indigo-500'}`} />
-            {isLive ? 'Live Sync Active' : 'Local Cache Mode'}
+          <div className="hidden xl:flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-[11px] font-bold text-emerald-700">
+            <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
+            Groq LLaMA 3.3 Active
           </div>
 
           <Button asChild size="sm" icon={<Plus size={14} />} className="hidden sm:inline-flex rounded-full">
@@ -135,7 +113,7 @@ function TopBar({ onMenu }: { onMenu: () => void }) {
             <span className="absolute top-1.5 right-1.5 size-2 rounded-full bg-[#4F46E5]" />
           </IconButton>
 
-          <NavLink to="/profile" aria-label="User Profile" className="flex items-center gap-2 rounded-full p-0.5 hover:ring-2 hover:ring-slate-200 transition-all">
+          <NavLink to="/profile" className="flex items-center gap-2 rounded-full p-0.5 hover:ring-2 hover:ring-slate-200 transition-all">
             <ImageWithFallback
               src={currentUser?.avatarUrl}
               alt="Profile portrait"
@@ -239,12 +217,7 @@ function MobileDrawer({ open, onClose }: { open: boolean; onClose: () => void })
     <div className="fixed inset-0 z-40 lg:hidden" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose() }}>
       <div className="absolute inset-y-0 left-0 w-[min(84vw,20rem)] border-r border-slate-200 bg-white p-5 shadow-2xl">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="size-8 rounded-xl bg-[#0F172A] text-[#B4F056] flex items-center justify-center font-bold">
-              <Globe size={18} />
-            </div>
-            <span className="font-display text-xl font-bold text-slate-900">GlobeTrotter</span>
-          </div>
+          <GlobeTrotterLogo size={32} />
           <IconButton label="Close navigation" size="sm" onClick={onClose}><Menu size={18} /></IconButton>
         </div>
         <nav className="mt-8 space-y-1.5" aria-label="Mobile menu">
@@ -276,11 +249,23 @@ function MobileDrawer({ open, onClose }: { open: boolean; onClose: () => void })
 
 export function AppShell({ children }: { children: ReactNode }) {
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const [commandPaletteOpen, setCommandPaletteOpen] = useState(false)
   const location = useLocation()
+
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault()
+        setCommandPaletteOpen((prev) => !prev)
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [])
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-slate-900 relative antialiased selection:bg-[#B4F056] selection:text-[#0F172A]">
-      <TopBar onMenu={() => setDrawerOpen(true)} />
+      <TopBar onMenu={() => setDrawerOpen(true)} onOpenCommandPalette={() => setCommandPaletteOpen(true)} />
       <Sidebar />
       <MobileDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
       <main key={location.pathname} className="min-w-0 pb-24 lg:ml-60 lg:pb-12">
@@ -289,7 +274,8 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       </main>
       <MobileTabBar />
-      <GlobeGuideChat />
+      <AiCopilotFloatingChat />
+      <CommandPaletteModal open={commandPaletteOpen} onClose={() => setCommandPaletteOpen(false)} />
     </div>
   )
 }

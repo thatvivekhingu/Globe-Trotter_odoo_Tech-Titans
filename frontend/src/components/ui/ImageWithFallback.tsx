@@ -1,21 +1,42 @@
-import { ImageOff } from 'lucide-react'
 import { useState } from 'react'
 import type { ImgHTMLAttributes } from 'react'
 
 interface ImageWithFallbackProps extends ImgHTMLAttributes<HTMLImageElement> {
   fallbackClassName?: string
+  fallbackSrc?: string
 }
 
-export function ImageWithFallback({ alt, className = '', fallbackClassName = '', onError, ...props }: ImageWithFallbackProps) {
-  const [failed, setFailed] = useState(false)
+const DEFAULT_TRAVEL_FALLBACK = 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80'
 
-  if (failed) {
-    return (
-      <div role="img" aria-label={alt} className={['flex items-center justify-center bg-ink/5 text-ink/35', fallbackClassName || className].join(' ')}>
-        <ImageOff size={22} aria-hidden="true" />
-      </div>
-    )
+export function ImageWithFallback({ 
+  alt, 
+  className = '', 
+  fallbackClassName = '', 
+  fallbackSrc = DEFAULT_TRAVEL_FALLBACK,
+  src,
+  onError, 
+  ...props 
+}: ImageWithFallbackProps) {
+  const [currentSrc, setCurrentSrc] = useState<string | undefined>(src || fallbackSrc)
+  const [hasFailed, setHasFailed] = useState(false)
+
+  const handleError = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
+    if (!hasFailed) {
+      setHasFailed(true)
+      setCurrentSrc(fallbackSrc)
+    }
+    onError?.(event)
   }
 
-  return <img {...props} alt={alt} className={className} loading={props.loading || 'lazy'} onError={(event) => { setFailed(true); onError?.(event) }} />
+  return (
+    <img
+      {...props}
+      src={currentSrc || fallbackSrc}
+      alt={alt}
+      className={className}
+      loading={props.loading || 'lazy'}
+      onError={handleError}
+    />
+  )
 }
+

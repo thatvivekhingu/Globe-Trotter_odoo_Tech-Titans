@@ -202,9 +202,13 @@ export function BookingPage() {
     id: string
   } | null>(null)
 
-  const [paymentStep, setPaymentStep] = useState<'review' | 'processing' | 'confirmed'>('review')
+  const [paymentStep, setPaymentStep] = useState<'review' | 'seat_select' | 'processing' | 'confirmed'>('review')
   const [paymentMethod, setPaymentMethod] = useState<'upi' | 'card'>('upi')
   const [pnrCode, setPnrCode] = useState('')
+  const [selectedSeat, setSelectedSeat] = useState('14A')
+  const [seatPrice, setSeatPrice] = useState(250)
+  const [selectedMeal, setSelectedMeal] = useState('AVML (Vegetarian Hindu Meal)')
+  const [extraBaggage, setExtraBaggage] = useState(0) // 0 or 1800 for +5kg
 
   const activeTrip = state.db.trips[0]
 
@@ -627,24 +631,119 @@ export function BookingPage() {
                   </button>
                 </div>
 
-                {/* Booking Details Card */}
-                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Selected Reservation</p>
-                  <h4 className="font-display text-base font-bold text-slate-900">{selectedBooking.title}</h4>
-                  <p className="text-xs text-slate-600">{selectedBooking.subtitle}</p>
-                  <div className="flex justify-between items-center text-xs text-slate-500 pt-1">
-                    <span>Base Fare & Taxes:</span>
-                    <span className="font-semibold text-slate-900">{formatCurrency(selectedBooking.price)}</span>
+                {/* Booking Details Card & Itemized Fare Breakdown */}
+                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2.5">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Selected Reservation</p>
+                      <h4 className="font-display text-base font-bold text-slate-900">{selectedBooking.title}</h4>
+                      <p className="text-xs text-slate-600">{selectedBooking.subtitle}</p>
+                    </div>
+                    <span className="text-[10px] font-extrabold bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-md border border-indigo-100">
+                      Terminal T2
+                    </span>
                   </div>
-                  {couponApplied && (
-                    <div className="flex justify-between items-center text-xs text-emerald-600 font-bold">
-                      <span>Promo Discount ({couponCode}):</span>
-                      <span>-{formatCurrency(discountAmount)}</span>
+
+                  {/* Flight Specific Customization: Seat & Meal */}
+                  {selectedBooking.type === 'flight' && (
+                    <div className="pt-2 border-t border-slate-200/80 space-y-3">
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 mb-1.5 flex justify-between">
+                          <span>Select Seat:</span>
+                          <span className="text-indigo-600 font-bold">{selectedSeat} ({seatPrice > 0 ? `+${formatCurrency(seatPrice)}` : 'Free'})</span>
+                        </label>
+                        <div className="grid grid-cols-4 gap-1.5 text-xs">
+                          {[
+                            { seat: '12A', type: 'Window', price: 250 },
+                            { seat: '12B', type: 'Middle', price: 0 },
+                            { seat: '12C', type: 'Aisle', price: 150 },
+                            { seat: '14A', type: 'Window (XL)', price: 350 },
+                          ].map((s) => (
+                            <button
+                              key={s.seat}
+                              type="button"
+                              onClick={() => { setSelectedSeat(s.seat); setSeatPrice(s.price) }}
+                              className={`p-2 rounded-xl border text-center transition-all cursor-pointer ${
+                                selectedSeat === s.seat
+                                  ? 'bg-[#0F172A] text-white border-[#0F172A] shadow-xs'
+                                  : 'bg-white text-slate-700 border-slate-200 hover:border-slate-400'
+                              }`}
+                            >
+                              <p className="font-bold">{s.seat}</p>
+                              <p className="text-[9px] opacity-80">{s.type}</p>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        <div>
+                          <label className="block text-[11px] font-bold text-slate-700 mb-1">Meal Preference</label>
+                          <select
+                            value={selectedMeal}
+                            onChange={(e) => setSelectedMeal(e.target.value)}
+                            className="w-full p-2 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-800"
+                          >
+                            <option value="AVML (Vegetarian Hindu Meal)">Veg Hindu Meal (AVML)</option>
+                            <option value="VJML (Jain Vegetarian Meal)">Jain Meal (VJML)</option>
+                            <option value="NVML (Non-Veg Chicken Meal)">Non-Veg Meal (NVML)</option>
+                            <option value="FPML (Fruit Platter)">Fruit Platter (FPML)</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-bold text-slate-700 mb-1">Extra Baggage</label>
+                          <select
+                            value={extraBaggage}
+                            onChange={(e) => setExtraBaggage(Number(e.target.value))}
+                            className="w-full p-2 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-800"
+                          >
+                            <option value={0}>Standard (15kg Included)</option>
+                            <option value={1800}>+5kg Extra (+₹1,800)</option>
+                          </select>
+                        </div>
+                      </div>
                     </div>
                   )}
+
+                  {/* Itemized Fare Table */}
+                  <div className="pt-2 border-t border-slate-200 text-xs space-y-1 text-slate-500">
+                    <div className="flex justify-between">
+                      <span>Base Airfare / Stay:</span>
+                      <span className="font-medium text-slate-800">{formatCurrency(Math.round(selectedBooking.price * 0.82))}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Aviation Fuel & UDF Fees:</span>
+                      <span className="font-medium text-slate-800">{formatCurrency(Math.round(selectedBooking.price * 0.12))}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>GST (18% Aviation Tax):</span>
+                      <span className="font-medium text-slate-800">{formatCurrency(Math.round(selectedBooking.price * 0.06))}</span>
+                    </div>
+                    {seatPrice > 0 && selectedBooking.type === 'flight' && (
+                      <div className="flex justify-between">
+                        <span>Selected Seat ({selectedSeat}):</span>
+                        <span className="font-medium text-slate-800">+{formatCurrency(seatPrice)}</span>
+                      </div>
+                    )}
+                    {extraBaggage > 0 && (
+                      <div className="flex justify-between">
+                        <span>Extra Baggage (+5kg):</span>
+                        <span className="font-medium text-slate-800">+{formatCurrency(extraBaggage)}</span>
+                      </div>
+                    )}
+                    {couponApplied && (
+                      <div className="flex justify-between text-emerald-600 font-bold">
+                        <span>Promo Discount ({couponCode}):</span>
+                        <span>-{formatCurrency(discountAmount)}</span>
+                      </div>
+                    )}
+                  </div>
+
                   <div className="border-t border-slate-200 pt-2 flex justify-between items-center font-bold text-sm text-slate-900">
                     <span>Total Amount Payable</span>
-                    <span className="text-[#4F46E5] text-lg">{formatCurrency(finalPayablePrice)}</span>
+                    <span className="text-[#4F46E5] text-lg">
+                      {formatCurrency(finalPayablePrice + (selectedBooking.type === 'flight' ? seatPrice : 0) + extraBaggage)}
+                    </span>
                   </div>
                 </div>
 
@@ -669,7 +768,7 @@ export function BookingPage() {
                     <button
                       type="button"
                       onClick={() => setPaymentMethod('upi')}
-                      className={`p-3.5 rounded-2xl border text-left flex items-center gap-2.5 transition-all ${
+                      className={`p-3.5 rounded-2xl border text-left flex items-center gap-2.5 transition-all cursor-pointer ${
                         paymentMethod === 'upi'
                           ? 'border-[#4F46E5] bg-indigo-50/60 font-bold text-[#4F46E5]'
                           : 'border-slate-200 text-slate-600'
@@ -681,7 +780,7 @@ export function BookingPage() {
                     <button
                       type="button"
                       onClick={() => setPaymentMethod('card')}
-                      className={`p-3.5 rounded-2xl border text-left flex items-center gap-2.5 transition-all ${
+                      className={`p-3.5 rounded-2xl border text-left flex items-center gap-2.5 transition-all cursor-pointer ${
                         paymentMethod === 'card'
                           ? 'border-[#4F46E5] bg-indigo-50/60 font-bold text-[#4F46E5]'
                           : 'border-slate-200 text-slate-600'
@@ -694,7 +793,7 @@ export function BookingPage() {
                 </div>
 
                 <Button className="w-full rounded-full py-3 font-bold shadow-md shadow-indigo-500/20" onClick={handleProcessPayment}>
-                  Pay {formatCurrency(finalPayablePrice)} & Confirm
+                  Pay {formatCurrency(finalPayablePrice + (selectedBooking.type === 'flight' ? seatPrice : 0) + extraBaggage)} & Confirm
                 </Button>
               </div>
             )}
@@ -732,18 +831,22 @@ export function BookingPage() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-3 gap-2 text-xs">
+                  <div className="grid grid-cols-4 gap-2 text-xs">
                     <div>
                       <span className="text-[10px] text-slate-400 block">Passenger</span>
                       <span className="font-bold text-slate-900">{currentUser?.name || 'Priyanka Lachhani'}</span>
                     </div>
                     <div>
-                      <span className="text-[10px] text-slate-400 block">Gate / Room</span>
-                      <span className="font-bold text-slate-900">Gate 14B · Seat 6F</span>
+                      <span className="text-[10px] text-slate-400 block">Terminal & Gate</span>
+                      <span className="font-bold text-slate-900">T2 · Gate 14B</span>
                     </div>
                     <div>
-                      <span className="text-[10px] text-slate-400 block">Baggage</span>
-                      <span className="font-bold text-slate-900">15kg + 7kg Cabin</span>
+                      <span className="text-[10px] text-slate-400 block">Seat & Meal</span>
+                      <span className="font-bold text-slate-900">{selectedSeat} · {selectedMeal.split(' ')[0]}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-slate-400 block">Baggage & Belt</span>
+                      <span className="font-bold text-slate-900">{extraBaggage > 0 ? '20kg' : '15kg'} · Belt 04</span>
                     </div>
                   </div>
 
@@ -753,13 +856,32 @@ export function BookingPage() {
                   </div>
                 </div>
 
-                <div className="flex gap-2.5">
+                <div className="flex flex-wrap gap-2.5">
                   <Button
                     variant="secondary"
                     className="flex-1 rounded-full text-xs font-bold"
                     onClick={() => window.print()}
                   >
                     🖨️ Print E-Ticket
+                  </Button>
+                  <Button
+                    className="flex-1 rounded-full text-xs font-bold bg-[#25D366] hover:bg-[#20bd5a] text-white"
+                    onClick={() => {
+                      const text = encodeURIComponent(
+                        `✈️ *GlobeTrotter Confirmed E-Ticket & Pass*\n` +
+                        `👤 *Passenger:* ${currentUser?.name || 'Priyanka Lachhani'}\n` +
+                        `🎫 *Booking:* ${selectedBooking.title}\n` +
+                        `🔖 *PNR Reference:* ${pnrCode}\n` +
+                        `🛫 *Terminal:* T2 | *Gate:* 14B | *Seat:* ${selectedSeat}\n` +
+                        `🍽️ *Meal:* ${selectedMeal.split(' ')[0]} | *Baggage:* ${extraBaggage > 0 ? '20kg' : '15kg'}\n` +
+                        `✅ *Status:* Confirmed (Payment ID: ${razorpayPaymentId || 'pay_live_test'})\n\n` +
+                        `🔗 *Open Digital Boarding Pass:* ${window.location.origin}/booking`
+                      )
+                      window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank')
+                      notify('📲 E-Ticket formatted for WhatsApp dispatch!')
+                    }}
+                  >
+                    📲 WhatsApp Pass
                   </Button>
                   <Button
                     className="flex-1 rounded-full text-xs font-bold"
@@ -770,7 +892,7 @@ export function BookingPage() {
                       setCouponCode('')
                     }}
                   >
-                    Done & Return
+                    Done
                   </Button>
                 </div>
               </div>

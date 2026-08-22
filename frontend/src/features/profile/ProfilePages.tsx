@@ -10,6 +10,7 @@ import { Card, SectionHeading } from '../../components/ui/Card'
 import { ConfirmDialog, EmptyState } from '../../components/ui/Feedback'
 import { Field, Select, TextInput } from '../../components/ui/Field'
 import { ImageWithFallback } from '../../components/ui/ImageWithFallback'
+import { apiClient, getApiErrorMessage } from '../../lib/api/client'
 
 export function ProfilePage() {
   const { currentUser, state, dispatch, notify } = useTripWise()
@@ -119,7 +120,6 @@ export function ProfilePage() {
 
 export function SettingsPage() {
   const { notify } = useTripWise()
-  const [groqKey, setGroqKey] = useState(() => localStorage.getItem('GLOBETROTTER_GROQ_KEY') || import.meta.env.VITE_GROQ_API_KEY || '')
   const [selectedModel, setSelectedModel] = useState(() => {
     const saved = localStorage.getItem('GLOBETROTTER_AI_MODEL')
     if (!saved || saved.includes('gpt-oss') || saved.includes('qwen')) return 'llama-3.3-70b-versatile'
@@ -130,47 +130,18 @@ export function SettingsPage() {
 
   function saveAiSettings(e: FormEvent) {
     e.preventDefault()
-    localStorage.setItem('GLOBETROTTER_GROQ_KEY', groqKey.trim())
     localStorage.setItem('GLOBETROTTER_AI_MODEL', selectedModel)
-    notify('Groq LLaMA AI configuration saved!')
+    notify('Model preference saved. API credentials remain protected on the server.')
   }
 
   async function testLlmConnection() {
     setTesting(true)
     setTestResult(null)
-    const keyToTest = groqKey.trim()
-    
-    if (!keyToTest) {
-      setTestResult('No API Key provided. GlobeTrotter will use the high-performance local AI fallback engine.')
-      setTesting(false)
-      return
-    }
-
     try {
-      const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${keyToTest}`,
-        },
-        body: JSON.stringify({
-          model: selectedModel,
-          messages: [
-            { role: 'user', content: 'Give a 1-sentence inspiring travel quote for GlobeTrotter.' }
-          ]
-        })
-      })
-      const data = await res.json()
-      const content = data?.choices?.[0]?.message?.content
-      if (content) {
-        setTestResult(`✅ Connected to ${selectedModel}! Response: "${content.trim()}"`)
-        notify('Groq LLaMA Connection Successful!')
-      } else if (data?.error?.message) {
-        setTestResult(`⚠️ ${data.error.message}`)
-        notify('API error', 'error')
-      }
-    } catch (err: any) {
-      setTestResult(`⚠️ Connection failed (${err.message}).`)
+      const response = await apiClient.get<{ configured: boolean; provider: string; model: string }>('/ai/status')
+      setTestResult(response.data.configured ? `Connected to ${response.data.provider} using ${response.data.model}.` : 'AI provider is not configured on the backend. Add GROQ_API_KEY to backend/.env.')
+    } catch (error) {
+      setTestResult(getApiErrorMessage(error, 'Could not reach the AI service.'))
     } finally {
       setTesting(false)
     }
@@ -204,25 +175,12 @@ export function SettingsPage() {
                 onChange={(e) => setSelectedModel(e.target.value)}
                 className="w-full px-3.5 py-2.5 rounded-xl border border-line bg-white text-sm font-medium"
               >
-                <option value="llama-3.3-70b-versatile">Groq LLaMA 3.3 70B Versatile (Recommended · Deep Travel Reasoning)</option>
-                <option value="llama-3.1-8b-instant">Groq LLaMA 3.1 8B Instant (Ultra-Fast 800+ tokens/sec)</option>
-                <option value="mixtral-8x7b-32768">Groq Mixtral 8x7B (32k Context Window)</option>
-                <option value="gemma2-9b-it">Google Gemma 2 9B IT (High Instruction Following)</option>
-                <option value="local-engine">GlobeTrotter Offline Local Engine</option>
+                <option value="llama-3.3-70b-versatile">Llama 3.3 70B (Recommended)</option>
+                <option value="llama-3.1-8b-instant">Llama 3.1 8B (Fast)</option>
               </select>
             </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-ink/70 mb-1">Groq API Key</label>
-              <input
-                type="password"
-                value={groqKey}
-                onChange={(e) => setGroqKey(e.target.value)}
-                placeholder="gsk_..."
-                className="w-full px-3.5 py-2.5 rounded-xl border border-line bg-white text-sm font-mono"
-              />
-              <p className="mt-1 text-[11px] text-ink/50">Groq API Key configured for ultra-fast LPU inference (500+ tokens/sec).</p>
-            </div>
+            <p className="rounded-xl border border-line bg-slate-50 p-3 text-xs text-ink/60">AI credentials are managed securely by the backend. Use “Test LLM Connection” to check server configuration.</p>
 
             {testResult && (
               <div className="p-3 rounded-xl bg-slate-50 border border-line text-xs font-medium text-slate-800">

@@ -6,6 +6,7 @@ import { Badge } from '../../components/ui/Badge'
 import { useTripWise } from '../../state/useTripWise'
 import { formatCurrency } from '../../lib/formatters'
 import { Link, useNavigate } from 'react-router-dom'
+import type { Trip, TripStop, TripActivity } from '../../types/domain'
 
 interface TourPackage {
   id: string
@@ -191,7 +192,7 @@ const TOUR_PACKAGES: TourPackage[] = [
 ]
 
 export function TourPackagesPage() {
-  const { notify } = useTripWise()
+  const { state, dispatch, currentUser, notify } = useTripWise()
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('all')
   const [selectedPackage, setSelectedPackage] = useState<TourPackage | null>(null)
@@ -225,8 +226,64 @@ export function TourPackagesPage() {
   })
 
   function handlePersonalizeWithAi(tour: TourPackage) {
-    notify(`⚡ Loading ${tour.title} into AI Itinerary Builder...`)
-    navigate('/recommendations')
+    const tripId = `trip-pkg-${Date.now()}`
+    const now = new Date().toISOString()
+    const startDate = new Date().toISOString().split('T')[0]
+    const endDate = new Date(Date.now() + tour.daysCount * 86400000).toISOString().split('T')[0]
+
+    const cityMatch = state.db.cities.find((c) =>
+      tour.destination.toLowerCase().includes(c.name.toLowerCase()) ||
+      c.name.toLowerCase().includes(tour.destination.toLowerCase())
+    ) || state.db.cities[0]
+
+    const newTrip: Trip = {
+      id: tripId,
+      ownerId: currentUser?.id || 'user-default',
+      name: tour.title,
+      description: `Curated ${tour.duration} expedition across ${tour.destination}. Inclusions: ${tour.inclusions.join(', ')}.`,
+      startDate,
+      endDate,
+      coverImageUrl: tour.imageUrl,
+      status: 'upcoming',
+      budgetLimit: tour.discountPrice,
+      currency: 'INR',
+      createdAt: now,
+      updatedAt: now,
+    }
+
+    dispatch({ type: 'CREATE_TRIP', trip: newTrip })
+
+    const stopId = `stop-${tripId}-1`
+    const newStop: TripStop = {
+      id: stopId,
+      tripId,
+      cityId: cityMatch.id,
+      order: 1,
+      arrivalDate: startDate,
+      departureDate: endDate,
+      notes: `Base Stop: ${tour.destination}`,
+    }
+    dispatch({ type: 'ADD_STOP', stop: newStop })
+
+    tour.highlights.forEach((h, hIdx) => {
+      const actId = `act-pkg-${Date.now()}-${hIdx}`
+      const newTripAct: TripActivity = {
+        id: `trip-act-${Date.now()}-${hIdx}`,
+        tripId,
+        stopId,
+        activityId: actId,
+        date: startDate,
+        startTime: hIdx === 0 ? '09:30' : hIdx === 1 ? '14:30' : '18:00',
+        durationMinutes: 180,
+        estimatedCost: Math.round(tour.discountPrice / (tour.highlights.length * 2)),
+        order: hIdx + 1,
+        notes: h,
+      }
+      dispatch({ type: 'ADD_TRIP_ACTIVITY', activity: newTripAct })
+    })
+
+    notify(`✨ Deconstructed "${tour.title}" into your live itinerary workspace!`)
+    navigate(`/trips/${tripId}/itinerary`)
   }
 
   function handleInstantBook(tour: TourPackage) {
