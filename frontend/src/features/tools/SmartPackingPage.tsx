@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { CheckCircle2, Circle, Download, Luggage, PhoneCall, Plus, RotateCcw, ShieldAlert, Sparkles, Trash2, Weight } from 'lucide-react'
+import { CheckCircle2, Circle, Luggage, PhoneCall, Plus, RotateCcw, ShieldAlert, Sparkles, Trash2 } from 'lucide-react'
 import { useTripWise } from '../../state/useTripWise'
 import { Card, SectionHeading } from '../../components/ui/Card'
 import { Button } from '../../components/ui/Button'
@@ -219,6 +219,17 @@ export function SmartPackingPage() {
                 <option value="toiletries">Toiletries</option>
                 <option value="gear">Gear</option>
               </select>
+              <input
+                type="number"
+                step="0.1"
+                min="0.1"
+                max="30"
+                value={newItemWeight}
+                onChange={(e) => setNewItemWeight(e.target.value)}
+                placeholder="0.5 kg"
+                className="w-20 px-3 py-2 rounded-2xl border border-slate-200 text-xs bg-white font-semibold text-center"
+                title="Estimated weight in kg"
+              />
               <Button type="submit" size="sm" icon={<Plus size={15} />} className="rounded-2xl">Add Item</Button>
             </form>
 

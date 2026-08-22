@@ -1,8 +1,9 @@
 import { BarChart3, Bell, Building2, CheckSquare, Compass, CreditCard, DollarSign, Flame, Globe, LayoutDashboard, Map, Menu, Plane, Plus, Search, Settings, Shield, Sparkles, UserCircle, WalletCards } from 'lucide-react'
-import { useState, type FormEvent, type ReactNode } from 'react'
-import { NavLink, useLocation, useNavigate } from 'react-router-dom'
+import { useState, useEffect, type ReactNode } from 'react'
+import { NavLink, useLocation } from 'react-router-dom'
 import { useTripWise } from '../../state/useTripWise'
-import { GlobeGuideChat } from '../ai/GlobeGuideChat'
+import { AiCopilotFloatingChat } from '../ai/AiCopilotFloatingChat'
+import { CommandPaletteModal } from '../navigation/CommandPaletteModal'
 import { Button, IconButton } from '../ui/Button'
 import { ImageWithFallback } from '../ui/ImageWithFallback'
 import { LivePresenceBar } from '../collaboration/LivePresenceBar'
@@ -63,10 +64,7 @@ function SidebarLink({ label, to, icon: Icon, badge }: { label: string; to: stri
   )
 }
 
-import { CommandPaletteModal } from './CommandPaletteModal'
-
 function TopBar({ onMenu, onOpenCommandPalette }: { onMenu: () => void; onOpenCommandPalette: () => void }) {
-  const navigate = useNavigate()
   const { currentUser } = useTripWise()
 
   return (
@@ -91,21 +89,20 @@ function TopBar({ onMenu, onOpenCommandPalette }: { onMenu: () => void; onOpenCo
           </NavLink>
         </div>
 
-        {/* Global Search Bar */}
-        <form onSubmit={handleSearch} className="hidden max-w-md flex-1 md:block">
-          <label className="group flex h-10 items-center gap-2.5 rounded-full border border-slate-200/90 bg-slate-50/90 px-4 text-xs text-slate-500 focus-within:border-[#4F46E5] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#4F46E5]/15 transition-all shadow-2xs">
-            <Search size={15} className="text-slate-400 group-focus-within:text-[#4F46E5]" />
-            <input
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              className="min-w-0 flex-1 bg-transparent text-xs font-medium text-slate-900 outline-none placeholder:text-slate-400"
-              placeholder="Search 30+ Indian destinations, flights, stays..."
-            />
-            <kbd className="hidden rounded-md border border-slate-200 bg-white px-1.5 py-0.5 text-[10px] font-semibold text-slate-400 lg:inline shadow-2xs">
-              ⌘ K
-            </kbd>
-          </label>
-        </form>
+        {/* Global Spotlight Search Trigger */}
+        <button
+          type="button"
+          onClick={onOpenCommandPalette}
+          className="hidden max-w-md flex-1 md:flex items-center justify-between h-10 rounded-full border border-slate-200/90 bg-slate-50/90 px-4 text-xs text-slate-500 hover:border-[#4F46E5] hover:bg-white transition-all text-left cursor-pointer shadow-2xs group"
+        >
+          <div className="flex items-center gap-2.5">
+            <Search size={15} className="text-slate-400 group-hover:text-[#4F46E5]" />
+            <span className="text-slate-400 font-medium">Search 30+ destinations, flights, visa, OCR...</span>
+          </div>
+          <kbd className="hidden rounded-md border border-slate-200 bg-white px-2 py-0.5 text-[10px] font-bold text-slate-600 lg:inline shadow-2xs">
+            ⌘ K
+          </kbd>
+        </button>
 
         {/* Right Nav Actions */}
         <div className="flex items-center gap-3">
@@ -291,8 +288,8 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       </main>
       <MobileTabBar />
-      <GlobeGuideChat />
-      <CommandPaletteModal isOpen={commandPaletteOpen} onClose={() => setCommandPaletteOpen(false)} />
+      <AiCopilotFloatingChat />
+      <CommandPaletteModal open={commandPaletteOpen} onClose={() => setCommandPaletteOpen(false)} />
     </div>
   )
 }

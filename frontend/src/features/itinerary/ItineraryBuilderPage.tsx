@@ -177,6 +177,16 @@ export function ItineraryBuilderPage() {
     notify('Custom activity added to itinerary!')
   }
 
+  function shareViaWhatsApp() {
+    const stopNames = tripData.stops.map(s => {
+      const c = state.db.cities.find(city => city.id === s.cityId)
+      return c?.name || 'City'
+    }).join(' ➔ ')
+    const text = `🌍 *GlobeTrotter Travel Itinerary: ${tripData.trip.name}*\n📅 Dates: ${formatDateRange(tripData.trip.startDate, tripData.trip.endDate)}\n📍 Stops: ${stopNames}\n\n⚡ View live synced plan: ${window.location.href}`
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank')
+    notify('Opened WhatsApp with formatted travel summary!')
+  }
+
   return (
     <div className="space-y-7">
       <div className="flex flex-wrap items-center justify-between gap-4">
@@ -187,6 +197,9 @@ export function ItineraryBuilderPage() {
           </Button>
           <Button variant="secondary" size="sm" icon={<History size={14} />} onClick={() => setAuditDrawerOpen(true)}>
             Audit Log
+          </Button>
+          <Button variant="secondary" size="sm" icon={<Share2 size={14} className="text-emerald-600" />} onClick={shareViaWhatsApp}>
+            WhatsApp
           </Button>
           <Button variant="secondary" size="sm" icon={<Share2 size={14} />} onClick={() => { void shareTrip() }}>Share</Button>
           <Button size="sm" icon={<Save size={14} />} onClick={() => notify('All changes are saved in real-time.')}>Saved Live</Button>
