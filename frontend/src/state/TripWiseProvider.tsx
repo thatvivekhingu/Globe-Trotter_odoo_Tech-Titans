@@ -8,12 +8,18 @@ import { tripWiseReducer } from './reducer'
 const SYNC_CHANNEL_NAME = 'globetrotter-realtime-sync'
 
 function createInitialState(): TripWiseState {
+  const initialDb = createInitialDb()
   if (typeof window !== 'undefined') {
     const stored = window.localStorage.getItem(DEMO_STATE_KEY)
     if (stored) {
       try {
         const parsed = JSON.parse(stored) as TripWiseState
-        if (parsed?.db?.trips?.length) return parsed
+        if (parsed?.db?.trips?.length) {
+          // Always ensure the rich 30 Indian cities and activities are populated
+          parsed.db.cities = initialDb.cities
+          parsed.db.activities = initialDb.activities
+          return parsed
+        }
       } catch {
         window.localStorage.removeItem(DEMO_STATE_KEY)
       }
