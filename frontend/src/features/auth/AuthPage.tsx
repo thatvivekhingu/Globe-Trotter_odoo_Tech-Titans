@@ -1,7 +1,8 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { Eye, EyeOff, Globe, Lock, Mail, Phone, Sparkles } from 'lucide-react'
+import { Eye, EyeOff, Lock, Mail, Phone, Sparkles } from 'lucide-react'
 import { checkApiHealth, getApiStatusLabel } from '../../lib/api/client'
+import { GlobeTrotterLogo } from '../../components/ui/GlobeTrotterLogo'
 import { useAuth } from '../../state/useAuth'
 import { useTripWise } from '../../state/useTripWise'
 
@@ -135,16 +136,8 @@ export function AuthPage({ mode }: { mode: 'login' | 'signup' }) {
     <div className="min-h-screen bg-slate-900 text-slate-100 flex flex-col justify-between selection:bg-[#B4F056] selection:text-slate-900">
       {/* Top Header */}
       <header className="mx-auto flex w-full max-w-7xl items-center justify-between px-4 py-5 sm:px-6 lg:px-8 border-b border-slate-800/80">
-        <Link to="/" className="flex items-center gap-3 group">
-          <div className="flex size-10 items-center justify-center rounded-2xl bg-[#B4F056] text-slate-950 font-bold shadow-md shadow-[#B4F056]/20 group-hover:scale-105 transition-transform">
-            <Globe size={20} />
-          </div>
-          <div>
-            <p className="font-display text-xl font-extrabold tracking-tight text-white">
-              GlobeTrotter<span className="text-[#B4F056]">.</span>
-            </p>
-            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Enterprise Travel Platform</p>
-          </div>
+        <Link to="/" className="group">
+          <GlobeTrotterLogo size={42} />
         </Link>
 
         <div className="flex items-center gap-3">

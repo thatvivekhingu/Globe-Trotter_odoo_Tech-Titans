@@ -4,6 +4,7 @@ import { NavLink, useLocation } from 'react-router-dom'
 import { useTripWise } from '../../state/useTripWise'
 import { AiCopilotFloatingChat } from '../ai/AiCopilotFloatingChat'
 import { CommandPaletteModal } from '../navigation/CommandPaletteModal'
+import { GlobeTrotterLogo } from '../ui/GlobeTrotterLogo'
 import { Button, IconButton } from '../ui/Button'
 import { ImageWithFallback } from '../ui/ImageWithFallback'
 import { LivePresenceBar } from '../collaboration/LivePresenceBar'
@@ -74,18 +75,8 @@ function TopBar({ onMenu, onOpenCommandPalette }: { onMenu: () => void; onOpenCo
           <IconButton label="Open navigation" size="sm" className="lg:hidden" onClick={onMenu}>
             <Menu size={18} />
           </IconButton>
-          <NavLink to="/dashboard" className="flex items-center gap-2.5 group">
-            <div className="size-9 rounded-2xl bg-linear-to-br from-slate-900 via-indigo-950 to-slate-900 text-[#B4F056] flex items-center justify-center shadow-md border border-slate-700/50 group-hover:scale-105 transition-all">
-              <Globe size={19} className="text-[#B4F056]" />
-            </div>
-            <div className="flex items-baseline gap-1.5">
-              <span className="font-display text-xl font-bold tracking-tight text-slate-900">
-                GlobeTrotter
-              </span>
-              <span className="text-[9px] font-extrabold uppercase tracking-wider bg-linear-to-r from-[#4F46E5] to-violet-600 text-white px-1.5 py-0.2 rounded-md shadow-2xs">
-                PRO
-              </span>
-            </div>
+          <NavLink to="/dashboard" className="group">
+            <GlobeTrotterLogo size={38} />
           </NavLink>
         </div>
 
@@ -226,12 +217,7 @@ function MobileDrawer({ open, onClose }: { open: boolean; onClose: () => void })
     <div className="fixed inset-0 z-40 lg:hidden" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose() }}>
       <div className="absolute inset-y-0 left-0 w-[min(84vw,20rem)] border-r border-slate-200 bg-white p-5 shadow-2xl">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="size-8 rounded-xl bg-[#0F172A] text-[#B4F056] flex items-center justify-center font-bold">
-              <Globe size={18} />
-            </div>
-            <span className="font-display text-xl font-bold text-slate-900">GlobeTrotter</span>
-          </div>
+          <GlobeTrotterLogo size={32} />
           <IconButton label="Close navigation" size="sm" onClick={onClose}><Menu size={18} /></IconButton>
         </div>
         <nav className="mt-8 space-y-1.5" aria-label="Mobile menu">

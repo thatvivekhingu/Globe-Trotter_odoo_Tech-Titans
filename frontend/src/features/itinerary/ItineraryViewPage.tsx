@@ -69,7 +69,7 @@ export function ItineraryViewPage() {
 
           <Button
             size="sm"
-            variant="outline"
+            variant="secondary"
             icon={<Share2 size={15} />}
             onClick={() => {
               navigator.clipboard?.writeText(`${window.location.origin}/trips/${data.trip.id}/itinerary`)
