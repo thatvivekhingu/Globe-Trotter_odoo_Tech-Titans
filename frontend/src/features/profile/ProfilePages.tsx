@@ -240,6 +240,9 @@ export function SettingsPage() {
           <div className="flex items-start gap-4"><div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-sage/25"><Globe2 size={18} /></div><div className="flex-1"><h2 className="font-display text-2xl text-ink">Language & locale</h2><p className="body-copy mt-1 text-sm">Choose how dates, currency, and future recommendation notes are presented.</p></div><Badge tone="sage">English · INR (₹)</Badge></div>
         </div>
       </Card>
+      <Card>
+        <div className="flex items-start gap-4"><div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-clay/10"><Settings2 size={18} className="text-clay" /></div><div><h2 className="font-display text-2xl text-ink">Workspace status</h2><p className="body-copy mt-1 text-sm">This product is designed to run against the live API when available and gracefully fall back to a preview workspace while the backend is starting.</p></div></div>
+      </Card>
     </div>
   )
 }

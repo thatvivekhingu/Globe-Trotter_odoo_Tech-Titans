@@ -13,6 +13,19 @@ apiClient.interceptors.request.use((config) => {
   return config
 })
 
+export async function checkApiHealth(): Promise<boolean> {
+  try {
+    await axios.get(`${apiClient.defaults.baseURL}/../health`, { timeout: 3000 })
+    return true
+  } catch {
+    return false
+  }
+}
+
+export function getApiStatusLabel(isOnline: boolean) {
+  return isOnline ? 'Live API connected' : 'Preview mode active'
+}
+
 export function getApiErrorMessage(error: unknown, fallback = 'Something went wrong. Please try again.') {
   if (axios.isAxiosError(error)) {
     const detail = error.response?.data?.detail
@@ -21,7 +34,7 @@ export function getApiErrorMessage(error: unknown, fallback = 'Something went wr
       const messages = detail.map((item) => typeof item?.msg === 'string' ? item.msg : '').filter(Boolean)
       if (messages.length) return messages.join(' ')
     }
-    if (!error.response) return 'The TripWise API is unavailable. You can continue with the local demo workspace.'
+    if (!error.response) return 'The TripWise API is unavailable. Demo preview remains available until the backend is running.'
   }
   return fallback
 }

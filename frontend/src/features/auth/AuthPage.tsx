@@ -1,8 +1,27 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { Globe, Bike, Footprints, Bus, Sparkles } from 'lucide-react'
+import { ArrowRight, Compass, Globe, MapPin, Sparkles, WalletCards } from 'lucide-react'
+import { checkApiHealth, getApiStatusLabel } from '../../lib/api/client'
 import { useAuth } from '../../state/useAuth'
 import { useTripWise } from '../../state/useTripWise'
+
+const featureCards = [
+  {
+    icon: Compass,
+    title: 'Discover cities',
+    description: 'Find destinations, compare regions, and lock in your route with confidence.',
+  },
+  {
+    icon: WalletCards,
+    title: 'Keep budgets clear',
+    description: 'Track daily spend, set limits, and know where your trip is stretching.',
+  },
+  {
+    icon: MapPin,
+    title: 'Stay on plan',
+    description: 'Shape each stop, add activities, and keep the full itinerary in one place.',
+  },
+]
 
 export function AuthPage({ mode }: { mode: 'login' | 'signup' }) {
   const navigate = useNavigate()
@@ -13,8 +32,13 @@ export function AuthPage({ mode }: { mode: 'login' | 'signup' }) {
   const [lastName, setLastName] = useState('')
   const [email, setEmail] = useState('aarav@globetrotter.demo')
   const [password, setPassword] = useState('Demo@1234')
+  const [apiOnline, setApiOnline] = useState<boolean | null>(null)
   const isSignup = mode === 'signup'
   const submitting = status === 'loading'
+
+  useEffect(() => {
+    void checkApiHealth().then(setApiOnline)
+  }, [])
 
   function validate() {
     if (isSignup && firstName.trim().length < 2) {
@@ -50,272 +74,216 @@ export function AuthPage({ mode }: { mode: 'login' | 'signup' }) {
   }
 
   return (
-    <div className="min-h-screen bg-[#F4F7F9] text-[#0F172A] font-sans antialiased selection:bg-[#B4F056] selection:text-black">
-      {/* Top Navbar */}
-      <header className="max-w-7xl mx-auto px-6 py-6 flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-2.5 group">
-          <div className="size-9 bg-[#0F172A] rounded-xl flex items-center justify-center text-[#B4F056] shadow-sm">
-            <Globe size={19} strokeWidth={2.2} />
+    <div className="min-h-screen bg-slate-50 text-slate-900 antialiased">
+      <header className="mx-auto flex max-w-7xl items-center justify-between px-4 py-5 sm:px-6 lg:px-8">
+        <Link to="/" className="flex items-center gap-3">
+          <div className="flex size-10 items-center justify-center rounded-2xl bg-slate-900 text-lime-300 shadow-sm">
+            <Globe size={18} />
           </div>
-          <div className="flex flex-col">
-            <span className="font-display font-extrabold text-xl tracking-tight leading-tight">GlobeTrotter</span>
-            <span className="text-[10px] font-bold uppercase tracking-widest text-[#4F46E5]">Smart Commute & Travel</span>
+          <div>
+            <p className="font-display text-xl font-extrabold tracking-[-0.05em] text-slate-900">GlobeTrotter</p>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-violet-600">Travel smarter</p>
           </div>
         </Link>
 
-        <nav className="hidden md:flex items-center bg-[#E2E8F0]/70 backdrop-blur-md p-1.5 rounded-full text-xs font-semibold text-slate-700 shadow-inner">
-          <a href="#hero-form" className="px-4 py-1.5 rounded-full hover:bg-white/80 transition-all">Features</a>
-          <a href="#benefits" className="px-4 py-1.5 rounded-full hover:bg-white/80 transition-all">Benefits</a>
-          <a href="#signup-form" className="px-4 py-1.5 rounded-full bg-white shadow-sm text-[#0F172A]">Signup Form</a>
-          <a href="#impact" className="px-4 py-1.5 rounded-full hover:bg-white/80 transition-all">Impact</a>
+        <nav className="hidden items-center gap-2 rounded-full border border-slate-200 bg-white/85 px-2 py-1.5 text-sm font-medium text-slate-600 shadow-sm md:flex">
+          <a href="#features" className="rounded-full px-3 py-1.5 transition-colors hover:bg-slate-100 hover:text-slate-900">Features</a>
+          <a href="#experience" className="rounded-full px-3 py-1.5 transition-colors hover:bg-slate-100 hover:text-slate-900">Experience</a>
+          <a href="#signup" className="rounded-full bg-slate-900 px-3 py-1.5 text-white">{isSignup ? 'Create account' : 'Sign in'}</a>
         </nav>
 
-        <div className="flex items-center gap-3">
-          <button
-            onClick={handleDemo}
-            className="hidden sm:inline-flex items-center gap-1.5 text-xs font-bold text-slate-700 hover:text-black bg-white/80 px-3.5 py-2 rounded-full border border-slate-200 shadow-sm transition-all"
-          >
-            <Sparkles size={14} className="text-[#4F46E5]" /> 1-Click Demo
-          </button>
-          <Link
-            to={isSignup ? '/login' : '/signup'}
-            className="text-xs font-bold text-slate-800 hover:text-[#4F46E5] px-4 py-2 rounded-full transition-colors"
-          >
+        <div className="flex items-center gap-2 sm:gap-3">
+          <span className={`hidden rounded-full border px-3 py-1.5 text-[11px] font-semibold sm:inline-flex ${apiOnline === false ? 'border-amber-200 bg-amber-50 text-amber-700' : 'border-emerald-200 bg-emerald-50 text-emerald-700'}`}>
+            {apiOnline === null ? 'Checking API...' : getApiStatusLabel(Boolean(apiOnline))}
+          </span>
+          <Link to={isSignup ? '/login' : '/signup'} className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 transition-colors hover:border-slate-300 hover:text-slate-900">
             {isSignup ? 'Sign in' : 'Register'}
           </Link>
         </div>
       </header>
 
-      {/* Main Hero & Form Section (Matching Reference Screenshot 2) */}
-      <section id="signup-form" className="max-w-7xl mx-auto px-6 pt-8 pb-20 grid lg:grid-cols-12 gap-12 items-center">
-        {/* Left Column: Form */}
-        <div className="lg:col-span-5 space-y-6">
-          <div>
-            <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-[#0F172A] leading-[1.08]">
-              Start Your Journey
+      <main>
+        <section id="signup" className="mx-auto grid max-w-7xl gap-10 px-4 pb-16 pt-8 sm:px-6 lg:grid-cols-[1.05fr_1.15fr] lg:px-8 lg:pb-20 lg:pt-10">
+          <div className="flex flex-col justify-center">
+            <div className="mb-6 inline-flex w-fit items-center gap-2 rounded-full border border-violet-200 bg-violet-50 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-violet-700">
+              <Sparkles size={12} /> Smart travel planning
+            </div>
+            <h1 className="max-w-xl font-display text-4xl font-extrabold tracking-[-0.07em] text-slate-900 sm:text-5xl lg:text-6xl">
+              Plan a better trip,
+              <span className="block text-slate-500">without the chaos.</span>
             </h1>
-            <p className="mt-3 text-sm sm:text-base text-slate-500 font-medium">
-              Create your account and begin intelligent travel planning today
+            <p className="mt-4 max-w-lg text-base leading-7 text-slate-600">
+              Built for city hopping, route planning, smart budgets, and the moments that make a trip feel alive.
             </p>
-          </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4 pt-2">
-            {isSignup ? (
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1.5">First name *</label>
-                  <input
-                    type="text"
-                    value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
-                    placeholder="Aarav"
-                    className="w-full px-4 py-3 rounded-full bg-white border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#0F172A] transition-all"
-                    required
-                  />
+            <form onSubmit={handleSubmit} className="mt-8 space-y-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-[0_18px_50px_-20px_rgba(15,23,42,0.18)] sm:p-6">
+              {isSignup ? (
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <label className="block text-sm font-medium text-slate-700">
+                    <span className="mb-2 block">First name</span>
+                    <input
+                      type="text"
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                      placeholder="Aarav"
+                      className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-slate-900 outline-none transition focus:border-slate-400 focus:bg-white"
+                      required
+                    />
+                  </label>
+                  <label className="block text-sm font-medium text-slate-700">
+                    <span className="mb-2 block">Last name</span>
+                    <input
+                      type="text"
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      placeholder="Mehta"
+                      className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-slate-900 outline-none transition focus:border-slate-400 focus:bg-white"
+                    />
+                  </label>
                 </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1.5">Last name</label>
-                  <input
-                    type="text"
-                    value={lastName}
-                    onChange={(e) => setLastName(e.target.value)}
-                    placeholder="Mehta"
-                    className="w-full px-4 py-3 rounded-full bg-white border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#0F172A] transition-all"
-                  />
-                </div>
+              ) : null}
+
+              <label className="block text-sm font-medium text-slate-700">
+                <span className="mb-2 block">Email</span>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@example.com"
+                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-slate-900 outline-none transition focus:border-slate-400 focus:bg-white"
+                  required
+                />
+              </label>
+
+              <label className="block text-sm font-medium text-slate-700">
+                <span className="mb-2 block">Password</span>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-slate-900 outline-none transition focus:border-slate-400 focus:bg-white"
+                  required
+                />
+              </label>
+
+              {authError ? <p className="text-sm font-medium text-red-600">{authError}</p> : null}
+
+              <div className="pt-2">
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-900 px-5 py-3.5 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {submitting ? 'Please wait...' : isSignup ? 'Create account' : 'Continue to dashboard'}
+                  <ArrowRight size={16} />
+                </button>
               </div>
-            ) : null}
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1.5">Email *</label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="aarav@globetrotter.demo"
-                className="w-full px-4 py-3 rounded-full bg-white border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#0F172A] transition-all"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1.5">Password *</label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                className="w-full px-4 py-3 rounded-full bg-white border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#0F172A] transition-all"
-                required
-              />
-            </div>
-
-            {authError ? (
-              <p className="text-xs font-semibold text-red-600">{authError}</p>
-            ) : null}
-
-            <div className="pt-2 flex flex-col gap-3">
-              <button
-                type="submit"
-                disabled={submitting}
-                className="w-full sm:w-auto px-8 py-3.5 bg-[#0F172A] hover:bg-slate-800 text-white rounded-full font-bold text-sm shadow-md transition-all active:scale-[0.98] disabled:opacity-50"
-              >
-                {submitting ? 'Please wait...' : isSignup ? 'Claim My Spot' : 'Start Journey'}
-              </button>
 
               <button
                 type="button"
                 onClick={handleDemo}
-                className="text-xs font-semibold text-slate-500 hover:text-black py-1 text-left"
+                className="w-full text-left text-sm font-medium text-slate-500 transition hover:text-slate-900"
               >
-                Or explore directly with <span className="underline font-bold text-[#4F46E5]">Demo Account</span> &rarr;
+                Or continue in <span className="font-semibold text-violet-600">preview mode</span>
               </button>
-            </div>
-          </form>
-        </div>
-
-        {/* Right Column: Interactive Vector Route Network Graphic (Matching Screenshot 2) */}
-        <div className="lg:col-span-7 relative h-[420px] sm:h-[480px] bg-white/70 backdrop-blur-md rounded-3xl border border-slate-200 p-6 flex flex-col justify-between overflow-hidden shadow-sm">
-          {/* Top Right Transport Icons */}
-          <div className="flex items-center justify-end gap-2 z-10">
-            <div className="size-9 rounded-full bg-[#B4F056] text-[#0F172A] flex items-center justify-center shadow-sm">
-              <Bike size={18} />
-            </div>
-            <div className="size-9 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center shadow-sm">
-              <Footprints size={18} />
-            </div>
-            <div className="size-9 rounded-full bg-[#38BDF8] text-white flex items-center justify-center shadow-sm">
-              <Bus size={18} />
-            </div>
+            </form>
           </div>
 
-          {/* Stylized Vector Route SVG */}
-          <svg className="absolute inset-0 size-full stroke-slate-300/80 fill-none" xmlns="http://www.w3.org/2000/svg">
-            {/* Grid street lines */}
-            <path d="M50,80 L200,120 L400,90 L600,140" strokeWidth="1.5" stroke="#CBD5E1" />
-            <path d="M120,30 L160,200 L240,360 L380,420" strokeWidth="1.5" stroke="#CBD5E1" />
-            <path d="M220,120 L320,220 L450,280 L580,340" strokeWidth="2" stroke="#B4F056" strokeDasharray="4 4" />
-            <path d="M80,240 Q250,80 480,200 T620,380" strokeWidth="2" stroke="#38BDF8" strokeDasharray="6 6" />
-
-            {/* Hub Station Dots */}
-            <circle cx="220" cy="120" r="7" fill="#38BDF8" className="animate-pulse" />
-            <circle cx="320" cy="220" r="7" fill="#B4F056" />
-            <circle cx="480" cy="200" r="6" fill="#86EFAC" />
-            <circle cx="380" cy="380" r="6" fill="#60A5FA" />
-          </svg>
-
-          {/* Floating Photo Preview Cards */}
-          <div className="absolute bottom-6 right-6 z-10 w-48 rounded-2xl overflow-hidden shadow-xl border-2 border-white transform rotate-2 hover:rotate-0 transition-transform duration-300">
-            <img
-              src="https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?w=500&q=80"
-              alt="Coastal Goan Sunset"
-              className="w-full h-28 object-cover"
-            />
-            <div className="p-2 bg-white text-[10px] font-bold text-slate-800">
-              Goa Beachside Stop
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Testimonial / Impact Section (Matching Screenshot 3) */}
-      <section id="impact" className="py-24 bg-white border-y border-slate-200">
-        <div className="max-w-5xl mx-auto px-6 text-center space-y-8">
-          <div className="inline-block">
-            <div className="size-20 mx-auto rounded-3xl overflow-hidden shadow-md border-2 border-slate-100">
-              <img
-                src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&q=80"
-                alt="Joris Thorne"
-                className="size-full object-cover"
-              />
-            </div>
-            <p className="mt-3 text-xs font-extrabold uppercase tracking-widest text-[#4F46E5]">Driven by Real Impact</p>
-          </div>
-
-          <blockquote className="font-display text-2xl sm:text-4xl lg:text-5xl font-medium tracking-tight text-[#0F172A] leading-snug max-w-3xl mx-auto">
-            &ldquo;I finally have an incentive to plan multi-city travel smartly, and the automated budget optimizer alone makes it worthwhile.&rdquo;
-          </blockquote>
-
-          <p className="text-sm font-bold text-slate-500">
-            Aarav Mehta &bull; Solo & Heritage Explorer
-          </p>
-        </div>
-      </section>
-
-      {/* Dark Indigo Perks & App Mockup Section (Matching Screenshot 4) */}
-      <section id="benefits" className="py-24 bg-[#0A192F] text-white">
-        <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-12 gap-12 items-center">
-          <div className="lg:col-span-6 space-y-6">
-            <span className="text-xs font-bold uppercase tracking-widest text-[#B4F056]">Early Adopter Perks</span>
-            <h2 className="font-display text-4xl sm:text-5xl font-extrabold tracking-tight leading-tight">
-              Intelligent Itineraries at Your Fingertips
-            </h2>
-            <p className="text-slate-300 text-sm sm:text-base leading-relaxed">
-              Experience deterministic budget calculation, interactive calendar matrices, and 1-click social sharing designed for modern globe-trotters.
-            </p>
-
-            <div className="flex items-center gap-4 pt-4">
-              <div className="px-4 py-2.5 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10 text-xs font-bold text-white flex items-center gap-2">
-                <span className="text-[#B4F056] text-base">2x</span> Faster Route Planning
-              </div>
-              <div className="px-4 py-2.5 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10 text-xs font-bold text-white flex items-center gap-2">
-                <Sparkles size={15} className="text-[#B4F056]" /> AI Constraint Aware
-              </div>
-            </div>
-          </div>
-
-          <div className="lg:col-span-6 flex justify-center">
-            {/* Phone Mockup Frame */}
-            <div className="w-72 sm:w-80 rounded-[2.5rem] p-3.5 bg-gradient-to-b from-slate-700 to-slate-900 shadow-2xl border-4 border-slate-600">
-              <div className="rounded-[2rem] overflow-hidden bg-gradient-to-br from-[#1E293B] via-[#0F172A] to-[#0A192F] p-6 text-center text-white space-y-6">
-                <div className="size-12 mx-auto rounded-2xl bg-[#B4F056] text-[#0F172A] flex items-center justify-center font-extrabold text-xl shadow-lg">
-                  <Globe size={24} />
+          <div id="experience" className="relative overflow-hidden rounded-[2rem] border border-slate-200 bg-gradient-to-br from-slate-900 via-slate-950 to-violet-950 p-5 shadow-[0_25px_80px_-30px_rgba(15,23,42,0.85)] sm:p-6">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(196,181,253,0.18),_transparent_30%),radial-gradient(circle_at_bottom_left,_rgba(163,230,53,0.12),_transparent_30%)]" />
+            <div className="relative">
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-300">Route overview</p>
+                  <h2 className="mt-2 font-display text-3xl font-bold tracking-[-0.05em] text-white">Goa to Jaipur</h2>
                 </div>
-                <h3 className="font-display text-2xl font-bold">GlobeTrotter Mobile</h3>
-                <div className="space-y-2 text-xs text-slate-300 text-left">
-                  <div className="p-3 rounded-xl bg-white/10">✨ AI Itinerary Optimizer</div>
-                  <div className="p-3 rounded-xl bg-white/10">💰 Real-Time Expense Splitter</div>
-                  <div className="p-3 rounded-xl bg-white/10">📍 Multi-City Transit Sync</div>
+                <div className="rounded-full border border-white/15 bg-white/6 px-3 py-1.5 text-xs font-semibold text-emerald-300">Live plan</div>
+              </div>
+
+              <div className="mt-6 grid gap-4 sm:grid-cols-3">
+                <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
+                  <p className="text-xs uppercase tracking-[0.12em] text-slate-300">Stops</p>
+                  <p className="mt-2 font-display text-2xl font-bold text-white">3</p>
+                </div>
+                <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
+                  <p className="text-xs uppercase tracking-[0.12em] text-slate-300">Budget</p>
+                  <p className="mt-2 font-display text-2xl font-bold text-white">₹48k</p>
+                </div>
+                <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
+                  <p className="text-xs uppercase tracking-[0.12em] text-slate-300">Days</p>
+                  <p className="mt-2 font-display text-2xl font-bold text-white">7</p>
                 </div>
               </div>
+
+              <div className="mt-8 rounded-[1.75rem] border border-white/10 bg-slate-950/60 p-4 backdrop-blur-sm">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.12em] text-slate-300">Day 2</p>
+                    <p className="mt-2 font-display text-2xl font-bold text-white">Baga → Old Goa</p>
+                  </div>
+                  <span className="rounded-full bg-lime-300 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-900">Low cost</span>
+                </div>
+
+                <div className="mt-5 space-y-3">
+                  {['Sunrise walk', 'Beach brunch', 'Heritage museum', 'Sunset drive'].map((item, index) => (
+                    <div key={item} className="flex items-center justify-between gap-4 rounded-2xl border border-white/10 bg-white/4 px-3 py-2.5">
+                      <div className="flex items-center gap-3">
+                        <span className="flex size-7 items-center justify-center rounded-full bg-violet-500/20 text-xs font-semibold text-violet-200">{index + 1}</span>
+                        <span className="text-sm text-slate-100">{item}</span>
+                      </div>
+                      <span className="text-xs text-slate-300">₹{(900 + index * 450).toLocaleString('en-IN')}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="mt-6 flex flex-wrap gap-3">
+                <span className="rounded-full border border-emerald-400/30 bg-emerald-500/10 px-3 py-1.5 text-xs font-semibold text-emerald-200">Budget-aware</span>
+                <span className="rounded-full border border-violet-400/30 bg-violet-500/10 px-3 py-1.5 text-xs font-semibold text-violet-200">Auto suggestions</span>
+                <span className="rounded-full border border-sky-400/30 bg-sky-500/10 px-3 py-1.5 text-xs font-semibold text-sky-200">Shared itinerary</span>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* High-Contrast Train Sunlight Photography Section (Matching Screenshot 1 & 5) */}
-      <section className="relative h-[480px] overflow-hidden">
-        <img
-          src="https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=1600&q=80"
-          alt="Happy travelers enjoying train window commute"
-          className="size-full object-cover brightness-75"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent flex flex-col justify-end p-8 sm:p-16 max-w-7xl mx-auto text-white">
-          <h2 className="font-display text-4xl sm:text-6xl font-extrabold tracking-tight">
-            Why Travel with Us
-          </h2>
-          <p className="mt-3 text-slate-200 max-w-xl text-sm sm:text-base">
-            From solo journeys across Himalayan peaks to sunlit coastal train routes, make every mile memorable.
-          </p>
-          <div className="mt-6">
-            <button
-              onClick={handleDemo}
-              className="px-8 py-3.5 bg-[#B4F056] hover:bg-[#a3e343] text-[#0F172A] rounded-full font-extrabold text-sm shadow-xl transition-all"
-            >
-              Experience GlobeTrotter Now &rarr;
-            </button>
+        <section id="features" className="mx-auto max-w-7xl px-4 pb-16 sm:px-6 lg:px-8">
+          <div className="mb-8 max-w-xl">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-violet-600">Everything in one place</p>
+            <h2 className="mt-3 font-display text-3xl font-bold tracking-[-0.05em] text-slate-900 sm:text-4xl">Make every trip feel calmer and more intentional.</h2>
           </div>
-        </div>
-      </section>
 
-      {/* Footer */}
-      <footer className="max-w-7xl mx-auto px-6 py-12 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-4 border-t border-slate-200">
-        <p>&copy; 2026 GlobeTrotter. Inspired by Nimbus Commute & Smart Travel Systems.</p>
-        <div className="flex items-center gap-6 font-semibold text-slate-700">
-          <Link to="/discover/cities" className="hover:text-black">Cities</Link>
-          <Link to="/discover/activities" className="hover:text-black">Activities</Link>
-          <Link to="/recommendations" className="hover:text-black">AI Plan</Link>
-          <button onClick={handleDemo} className="hover:text-black">Demo Account</button>
+          <div className="grid gap-5 md:grid-cols-3">
+            {featureCards.map(({ icon: Icon, title, description }) => (
+              <div key={title} className="rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-sm">
+                <div className="mb-4 flex size-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-900">
+                  <Icon size={18} />
+                </div>
+                <h3 className="font-display text-2xl font-bold tracking-[-0.04em] text-slate-900">{title}</h3>
+                <p className="mt-3 text-sm leading-6 text-slate-600">{description}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="border-y border-slate-200 bg-white py-16">
+          <div className="mx-auto max-w-5xl px-4 text-center sm:px-6 lg:px-8">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-violet-600">Travelers love it</p>
+            <blockquote className="mt-5 font-display text-3xl font-bold tracking-[-0.05em] text-slate-900 sm:text-5xl">
+              “It feels like having a thoughtful co-planner in my pocket.”
+            </blockquote>
+            <p className="mt-5 text-sm font-medium text-slate-500">Aarav Mehta · Weekend explorer</p>
+          </div>
+        </section>
+      </main>
+
+      <footer className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-4 py-8 text-sm text-slate-500 sm:flex-row sm:px-6 lg:px-8">
+        <p>© 2026 GlobeTrotter</p>
+        <div className="flex items-center gap-5">
+          <Link to="/discover/cities" className="transition hover:text-slate-900">Cities</Link>
+          <Link to="/discover/activities" className="transition hover:text-slate-900">Activities</Link>
+          <Link to="/recommendations" className="transition hover:text-slate-900">AI plan</Link>
+          <button type="button" onClick={handleDemo} className="transition hover:text-slate-900">Demo</button>
         </div>
       </footer>
     </div>
