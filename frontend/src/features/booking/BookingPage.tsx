@@ -270,6 +270,7 @@ export function BookingPage() {
   const finalPayablePrice = Math.max(0, (selectedBooking?.price || 0) - discountAmount)
 
   async function handleProcessPayment() {
+    if (!selectedBooking) return
     setPaymentStep('processing')
     const razorpayKey = import.meta.env.VITE_RAZORPAY_KEY_ID
 
@@ -308,32 +309,46 @@ export function BookingPage() {
       }
     }
 
-    // Instant Pro Sandbox Simulation (1.2s realistic banking animation)
-    setTimeout(() => {
-      completeBooking(`pay_live_test_${Math.random().toString(36).substring(2, 10).toUpperCase()}`)
-    }, 1200)
+    setPaymentStep('review')
+    notify('Online payment is not configured. Add VITE_RAZORPAY_KEY_ID to complete a real booking.', 'error')
   }
 
   function completeBooking(payId: string) {
+    if (!selectedBooking) return
     const code = 'GT-' + Math.random().toString(36).substring(2, 8).toUpperCase()
     setPnrCode(code)
     setRazorpayPaymentId(payId)
     setPaymentStep('confirmed')
 
-    // Automatically log expense in active trip!
-    if (activeTrip && selectedBooking) {
-      dispatch({
-        type: 'ADD_EXPENSE',
-        expense: {
-          id: `exp-${Date.now()}`,
-          tripId: activeTrip.id,
-          category: selectedBooking.type === 'flight' ? 'transportation' : 'accommodation',
-          amount: finalPayablePrice,
-          description: `Live Booking: ${selectedBooking.title} (PNR: ${code}, PayID: ${payId})`,
-          date: new Date().toISOString().split('T')[0],
-        },
-      })
+    const today = new Date()
+    const startDate = today.toISOString().split('T')[0]
+    const endDate = new Date(today.getTime() + (selectedBooking.type === 'hotel' ? 2 : 1) * 86400000).toISOString().split('T')[0]
+    const booking = selectedBooking
+    const bookingTrip = activeTrip || {
+      id: `trip-booking-${Date.now()}`,
+      ownerId: currentUser?.id || 'user-1',
+      name: booking.type === 'flight' ? `Flight booking: ${booking.title}` : `Hotel booking: ${booking.title}`,
+      description: booking.subtitle,
+      currency: 'INR' as const,
+      startDate,
+      endDate,
+      budgetLimit: finalPayablePrice,
+      status: 'upcoming' as const,
+      createdAt: today.toISOString(),
+      updatedAt: today.toISOString(),
     }
+    if (!activeTrip) dispatch({ type: 'CREATE_TRIP', trip: bookingTrip })
+    dispatch({
+      type: 'ADD_EXPENSE',
+      expense: {
+        id: `exp-${Date.now()}`,
+        tripId: bookingTrip.id,
+        category: booking.type === 'flight' ? 'transportation' : 'accommodation',
+        amount: finalPayablePrice,
+        description: `Live Booking: ${booking.title} (PNR: ${code}, PayID: ${payId})`,
+        date: startDate,
+      },
+    })
     notify(`🎉 Booking Confirmed! PNR: ${code} added to trip itinerary & budget.`)
   }
 
