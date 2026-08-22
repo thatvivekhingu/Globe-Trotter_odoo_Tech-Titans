@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { Bot, Send, Sparkles, Minimize2 } from 'lucide-react'
+import { Bot, Mic, MicOff, Minimize2, Send, Sparkles, Volume2, VolumeX } from 'lucide-react'
 
 interface ChatMessage {
   id: string
@@ -12,7 +12,7 @@ const initialMessages: ChatMessage[] = [
   {
     id: 'm1',
     sender: 'ai',
-    text: 'Hello! I am your GlobeTrotter AI Travel Copilot 🧭. Ask me anything about destinations, budget saving tips, local food, or day-by-day packing suggestions!',
+    text: 'Hello! I am your GlobeTrotter AI Travel Copilot 🧭. You can type or tap the microphone 🎙️ to speak in Hindi or English!',
     timestamp: 'Just now',
   },
 ]
@@ -22,6 +22,8 @@ export function AiCopilotFloatingChat() {
   const [messages, setMessages] = useState<ChatMessage[]>(initialMessages)
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
+  const [listening, setListening] = useState(false)
+  const [speakingId, setSpeakingId] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const scrollToBottom = () => {
@@ -31,6 +33,44 @@ export function AiCopilotFloatingChat() {
   useEffect(() => {
     if (open) scrollToBottom()
   }, [messages, open])
+
+  function startVoiceRecognition() {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
+    if (!SpeechRecognition) {
+      alert('Speech recognition is not supported on this browser. Try Chrome/Edge.')
+      return
+    }
+    const recognition = new SpeechRecognition()
+    recognition.lang = 'en-IN'
+    recognition.interimResults = false
+    setListening(true)
+    recognition.onresult = (event: any) => {
+      const transcript = event.results[0][0].transcript
+      setInput(transcript)
+      setListening(false)
+      void handleSend(transcript)
+    }
+    recognition.onerror = () => setListening(false)
+    recognition.onend = () => setListening(false)
+    recognition.start()
+  }
+
+  function speakText(id: string, text: string) {
+    if (!window.speechSynthesis) return
+    if (speakingId === id) {
+      window.speechSynthesis.cancel()
+      setSpeakingId(null)
+      return
+    }
+    window.speechSynthesis.cancel()
+    const cleanText = text.replace(/[*_#•-]/g, ' ')
+    const utterance = new SpeechSynthesisUtterance(cleanText)
+    utterance.rate = 1.02
+    utterance.pitch = 1.0
+    utterance.onend = () => setSpeakingId(null)
+    setSpeakingId(id)
+    window.speechSynthesis.speak(utterance)
+  }
 
   const handleSend = async (textToSend?: string) => {
     const query = (textToSend || input).trim()
@@ -176,13 +216,34 @@ export function AiCopilotFloatingChat() {
                   }`}
                 >
                   <p className="whitespace-pre-line">{m.text}</p>
-                  <span
-                    className={`block mt-1 text-[9px] text-right ${
-                      m.sender === 'user' ? 'text-indigo-200' : 'text-slate-400'
-                    }`}
-                  >
-                    {m.timestamp}
-                  </span>
+                  <div className="flex items-center justify-between mt-1 pt-1">
+                    {m.sender === 'ai' && (
+                      <button
+                        type="button"
+                        onClick={() => speakText(m.id, m.text)}
+                        className="inline-flex items-center gap-1 text-[10px] font-semibold text-[#4F46E5] hover:text-indigo-800 transition-colors"
+                      >
+                        {speakingId === m.id ? (
+                          <>
+                            <VolumeX size={12} className="text-red-500" />
+                            <span className="text-red-500">Stop</span>
+                          </>
+                        ) : (
+                          <>
+                            <Volume2 size={12} />
+                            <span>Listen</span>
+                          </>
+                        )}
+                      </button>
+                    )}
+                    <span
+                      className={`text-[9px] ${
+                        m.sender === 'user' ? 'text-indigo-200 ml-auto' : 'text-slate-400 ml-auto'
+                      }`}
+                    >
+                      {m.timestamp}
+                    </span>
+                  </div>
                 </div>
               </div>
             ))}
@@ -192,7 +253,7 @@ export function AiCopilotFloatingChat() {
                 <div className="size-2 rounded-full bg-[#4F46E5] animate-bounce" />
                 <div className="size-2 rounded-full bg-[#4F46E5] animate-bounce [animation-delay:0.2s]" />
                 <div className="size-2 rounded-full bg-[#4F46E5] animate-bounce [animation-delay:0.4s]" />
-                <span className="text-[11px] ml-1">Analyzing route...</span>
+                <span className="text-[11px] ml-1">Groq LLaMA thinking...</span>
               </div>
             )}
             <div ref={messagesEndRef} />
@@ -220,25 +281,38 @@ export function AiCopilotFloatingChat() {
             </button>
           </div>
 
-          {/* Input Form */}
+          {/* Input Form with Voice Mic */}
           <form
             onSubmit={(e) => {
               e.preventDefault()
               handleSend()
             }}
-            className="p-3 bg-white border-t border-slate-200 flex gap-2"
+            className="p-3 bg-white border-t border-slate-200 flex items-center gap-2"
           >
+            <button
+              type="button"
+              onClick={startVoiceRecognition}
+              title="Voice Input (Speech-to-Text)"
+              className={`size-9 rounded-full flex items-center justify-center shrink-0 transition-all ${
+                listening
+                  ? 'bg-red-500 text-white animate-pulse shadow-md ring-2 ring-red-400'
+                  : 'bg-indigo-50 text-[#4F46E5] hover:bg-indigo-100'
+              }`}
+            >
+              {listening ? <MicOff size={15} /> : <Mic size={15} />}
+            </button>
+
             <input
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Ask anything about your trip..."
-              className="flex-1 px-4 py-2.5 rounded-full bg-slate-100 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#4F46E5]"
+              placeholder={listening ? 'Listening to your voice...' : 'Type or speak your question...'}
+              className="flex-1 px-3.5 py-2.5 rounded-full bg-slate-100 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#4F46E5]"
             />
             <button
               type="submit"
               disabled={loading || !input.trim()}
-              className="size-9 rounded-full bg-[#0F172A] hover:bg-slate-800 text-white flex items-center justify-center shrink-0 disabled:opacity-40 transition-all"
+              className="size-9 rounded-full bg-[#0F172A] hover:bg-slate-800 text-white flex items-center justify-center shrink-0 disabled:opacity-40 transition-all shadow-xs"
             >
               <Send size={14} />
             </button>

@@ -1,4 +1,4 @@
-import { AlertTriangle, ArrowLeft, BarChart3, PieChart as PieChartIcon, Plus, Trash2, WalletCards, X } from 'lucide-react'
+import { AlertTriangle, ArrowLeft, BarChart3, Camera, PieChart as PieChartIcon, Plus, Trash2, WalletCards, X } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts'
@@ -12,6 +12,7 @@ import { EmptyState } from '../../components/ui/Feedback'
 import { ProgressBar } from '../../components/ui/ProgressBar'
 import { ProportionBar } from '../../components/ui/ProportionBar'
 import { GroupSplitter } from './GroupSplitter'
+import { ReceiptScannerModal } from './ReceiptScannerModal'
 import type { ExpenseCategory } from '../../types/domain'
 
 const chartColors: Record<ExpenseCategory, string> = {
@@ -28,6 +29,7 @@ export function BudgetPage() {
   const data = useTripData(tripId)
   
   const [addExpenseOpen, setAddExpenseOpen] = useState(false)
+  const [scannerOpen, setScannerOpen] = useState(false)
   const [expDescription, setExpDescription] = useState('')
   const [expCategory, setExpCategory] = useState<ExpenseCategory>('food')
   const [expAmount, setExpAmount] = useState('1200')
@@ -66,6 +68,20 @@ export function BudgetPage() {
     notify('Expense logged and budget updated!')
   }
 
+  function handleSaveScannedExpense(expense: { amount: number; description: string; category: ExpenseCategory; date: string }) {
+    if (!data) return
+    const newExpense = {
+      id: `exp-${Date.now()}`,
+      tripId: data.trip.id,
+      category: expense.category,
+      amount: expense.amount,
+      description: expense.description,
+      date: expense.date || data.trip.startDate,
+    }
+    dispatch({ type: 'ADD_EXPENSE', expense: newExpense })
+    notify(`Scanned expense (${formatCurrency(expense.amount)}) logged into budget!`)
+  }
+
   function handleDeleteExpense(id: string) {
     dispatch({ type: 'DELETE_EXPENSE', expenseId: id })
     notify('Expense removed.')
@@ -77,9 +93,14 @@ export function BudgetPage() {
         <Link to={`/trips/${data.trip.id}/itinerary`} className="inline-flex items-center gap-2 text-sm font-semibold text-ink/55 hover:text-ink">
           <ArrowLeft size={16} />Back to itinerary
         </Link>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2.5">
           <Badge tone={overBudget ? 'clay' : 'sage'}>{overBudget ? 'Over budget' : 'Within budget'}</Badge>
-          <Button size="sm" icon={<Plus size={15} />} onClick={() => setAddExpenseOpen(true)}>+ Add Expense</Button>
+          <Button size="sm" variant="secondary" icon={<Camera size={15} className="text-[#4F46E5]" />} onClick={() => setScannerOpen(true)}>
+            Scan Receipt with AI
+          </Button>
+          <Button size="sm" icon={<Plus size={15} />} onClick={() => setAddExpenseOpen(true)}>
+            + Add Expense
+          </Button>
         </div>
       </div>
 
@@ -259,6 +280,13 @@ export function BudgetPage() {
           </Card>
         </div>
       )}
+
+      {/* AI Receipt Scanner Modal */}
+      <ReceiptScannerModal
+        open={scannerOpen}
+        onClose={() => setScannerOpen(false)}
+        onSaveExpense={handleSaveScannedExpense}
+      />
     </div>
   )
 }

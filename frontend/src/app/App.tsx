@@ -18,6 +18,7 @@ import { SharedItineraryPage } from '../features/sharing/SharedItineraryPage'
 import { ProfilePage, SettingsPage } from '../features/profile/ProfilePages'
 import { SmartRecommendationPage } from '../features/ai/SmartRecommendationPage'
 import { SmartPackingPage } from '../features/tools/SmartPackingPage'
+import { SafetyAndLanguagePage } from '../features/tools/SafetyAndLanguagePage'
 import { BookingPage } from '../features/booking/BookingPage'
 import { Card } from '../components/ui/Card'
 import { Button } from '../components/ui/Button'
@@ -74,6 +75,7 @@ function AppRoutes() {
           <Route path="/recommendations" element={<SmartRecommendationPage />} />
           <Route path="/plan" element={<SmartRecommendationPage />} />
           <Route path="/booking" element={<BookingPage />} />
+          <Route path="/safety" element={<SafetyAndLanguagePage />} />
           <Route path="/packing" element={<SmartPackingPage />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/settings" element={<SettingsPage />} />
