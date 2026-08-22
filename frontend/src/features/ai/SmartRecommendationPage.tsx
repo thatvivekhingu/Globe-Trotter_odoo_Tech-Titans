@@ -1,28 +1,48 @@
 import { useState, type FormEvent } from 'react'
-import { Calendar, DollarSign, MapPin, Sparkles } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
+import { Sparkles, MapPin, Calendar, DollarSign, ArrowRight, Flame, Clock3, Zap } from 'lucide-react'
 import { useTripWise } from '../../state/useTripWise'
-import { formatCurrency } from '../../lib/formatters'
-import { generateRecommendation } from '../../lib/api/travelApi'
-import { getApiErrorMessage } from '../../lib/api/client'
+import { formatCurrency, formatCategoryLabel } from '../../lib/formatters'
 import { Button } from '../../components/ui/Button'
-import { Card, SectionHeading } from '../../components/ui/Card'
+import { Card } from '../../components/ui/Card'
 import { Field, Select, TextInput } from '../../components/ui/Field'
-import type { ExpenseCategory, Trip, TripActivity, TripStop } from '../../types/domain'
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts'
+import type { ExpenseCategory, Trip, TripStop, TripActivity } from '../../types/domain'
 
 interface RecommendationResult {
   title: string
   summary: string
   cities: Array<{ name: string; region: string; days: number; reason: string }>
-  suggestedStops: Array<{ cityName: string; arrivalDay: number; departureDay: number; activities: Array<{ name: string; category: string; cost: number; time: string; duration: number }> }>
+  suggestedStops: Array<{
+    cityName: string
+    arrivalDay: number
+    departureDay: number
+    activities: Array<{ name: string; category: string; cost: number; time: string; duration: number }>
+  }>
   budgetDistribution: Record<ExpenseCategory, number>
   totalEstimatedCost: number
-  proTips: string[]
 }
+
+const chartColors: Record<ExpenseCategory, string> = {
+  transportation: '#4F46E5',
+  accommodation: '#10B981',
+  activities: '#F59E0B',
+  food: '#EC4899',
+  other: '#64748B',
+}
+
+const QUICK_PROMPTS = [
+  { label: '🌴 4-Day Goa Beach & Sunset Chill', origin: 'Mumbai', days: '4', budget: '20000', style: 'relaxed', interest: 'nature', type: 'coastal' },
+  { label: '❄️ 5-Day Kashmir Gondola & Houseboat', origin: 'Delhi', days: '5', budget: '32000', style: 'balanced', interest: 'adventure', type: 'mountains' },
+  { label: '🏰 7-Day Royal Rajasthan Forts & Desert', origin: 'Jaipur', days: '7', budget: '38000', style: 'luxury', interest: 'heritage', type: 'royal' },
+  { label: '🏔️ 5-Day Manali & Solang Paragliding', origin: 'Chandigarh', days: '5', budget: '22000', style: 'backpacker', interest: 'adventure', type: 'mountains' },
+  { label: '🛶 4-Day Kerala Backwaters & Tea Gardens', origin: 'Bengaluru', days: '4', budget: '24000', style: 'balanced', interest: 'nature', type: 'coastal' },
+]
 
 export function SmartRecommendationPage() {
   const { state, dispatch, currentUser, notify } = useTripWise()
   const navigate = useNavigate()
+
   const [originCity, setOriginCity] = useState('Ahmedabad')
   const [days, setDays] = useState('5')
   const [budget, setBudget] = useState('30000')
@@ -32,56 +52,272 @@ export function SmartRecommendationPage() {
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<RecommendationResult | null>(null)
 
-  async function handleSubmit(event: FormEvent) {
-    event.preventDefault()
-    setLoading(true)
-    try {
-      const response = await generateRecommendation({ starting_city: originCity, days: Math.min(30, Math.max(1, Number(days) || 5)), budget: Math.max(1000, Number(budget) || 30000), travel_style: travelStyle, interests: [interest], destination_type: destinationType })
-      const cityDays = new Map<string, number>()
-      response.days.forEach((day) => cityDays.set(day.city, (cityDays.get(day.city) || 0) + 1))
-      const cities = response.suggestedCities.map((name) => ({ name, region: response.days.find((day) => day.city === name)?.city || name, days: cityDays.get(name) || 1, reason: response.days.find((day) => day.city === name)?.theme || 'Catalogue-backed destination.' }))
-      const suggestedStops = [...new Map(response.days.map((day) => [day.city, day])).values()].map((day) => ({ cityName: day.city, arrivalDay: day.dayNumber, departureDay: day.dayNumber, activities: day.activities.map((activity) => ({ ...activity, duration: Number.parseInt(activity.duration, 10) || 60 })) }))
-      const budgetDistribution = response.budgetBreakdown as Record<ExpenseCategory, number>
-      setResult({ title: response.tripName, summary: response.summary, cities, suggestedStops, budgetDistribution, totalEstimatedCost: Object.values(budgetDistribution).reduce((total, amount) => total + amount, 0), proTips: response.proTips })
-      notify('Live itinerary generated from the TripWise API.')
-    } catch (error) {
-      notify(getApiErrorMessage(error, 'Recommendation service unavailable. Start the backend and try again.'), 'error')
-    } finally {
-      setLoading(false)
-    }
+  function applyQuickPrompt(p: typeof QUICK_PROMPTS[0]) {
+    setOriginCity(p.origin)
+    setDays(p.days)
+    setBudget(p.budget)
+    setTravelStyle(p.style)
+    setInterest(p.interest)
+    setDestinationType(p.type)
   }
 
-  function createTrip() {
+  const handleSubmit = async (e?: FormEvent) => {
+    if (e) e.preventDefault()
+    setLoading(true)
+
+    const numDays = Math.max(2, parseInt(days, 10) || 5)
+    const numBudget = Math.max(5000, parseInt(budget, 10) || 30000)
+
+    const groqKey = localStorage.getItem('GLOBETROTTER_GROQ_KEY') || import.meta.env.VITE_GROQ_API_KEY || ''
+    let selectedModel = localStorage.getItem('GLOBETROTTER_AI_MODEL') || 'llama-3.3-70b-versatile'
+    if (selectedModel === 'openai/gpt-oss-120b' || selectedModel === 'llama-3.3-70b') selectedModel = 'llama-3.3-70b-versatile'
+
+    if (groqKey && selectedModel !== 'local-engine') {
+      try {
+        const prompt = `Generate a realistic travel itinerary in India starting from ${originCity} for ${numDays} days with a budget of ₹${numBudget}.
+Travel style: ${travelStyle}, Interest: ${interest}, Destination Type: ${destinationType}.
+Return valid JSON only with this schema:
+{
+  "title": "string",
+  "summary": "string",
+  "cities": [{"name": "string", "region": "string", "days": number, "reason": "string"}],
+  "suggestedStops": [
+    {
+      "cityName": "string",
+      "arrivalDay": 1,
+      "departureDay": 3,
+      "activities": [{"name": "string", "category": "adventure", "cost": number, "time": "10:00 AM", "duration": 120}]
+    }
+  ],
+  "budgetDistribution": {
+    "transportation": number,
+    "accommodation": number,
+    "activities": number,
+    "food": number,
+    "other": number
+  },
+  "totalEstimatedCost": number
+}`
+        const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${groqKey}`,
+          },
+          body: JSON.stringify({
+            model: selectedModel,
+            response_format: { type: 'json_object' },
+            messages: [
+              { role: 'system', content: 'You are GlobeTrotter AI Travel Architect. Respond with valid JSON only.' },
+              { role: 'user', content: prompt },
+            ],
+          }),
+        })
+        const data = await res.json()
+        const content = data?.choices?.[0]?.message?.content
+        if (content) {
+          const parsed = JSON.parse(content)
+          setResult(parsed)
+          notify(`⚡ AI recommendations generated using ${selectedModel}!`)
+          setLoading(false)
+          return
+        }
+      } catch (err) {
+        console.warn('Groq API call failed, falling back to smart engine:', err)
+      }
+    }
+
+    // High-Precision Fallback Generator
+    setTimeout(() => {
+      let chosenCities: Array<{ name: string; region: string; days: number; reason: string }> = []
+      let stopsData: RecommendationResult['suggestedStops'] = []
+
+      if (destinationType === 'coastal' || destinationType === 'nature') {
+        chosenCities = [
+          { name: 'Goa', region: 'North & South Goa', days: Math.ceil(numDays / 2), reason: 'Sun-kissed beaches, water sports, and vibrant shacks.' },
+          { name: 'Gokarna', region: 'Karnataka Coast', days: Math.floor(numDays / 2), reason: 'Serene cliff-side beach treks and secluded coves.' }
+        ]
+        stopsData = [
+          {
+            cityName: 'Goa',
+            arrivalDay: 1,
+            departureDay: Math.ceil(numDays / 2),
+            activities: [
+              { name: 'Grand Island PADI Scuba Diving & Dolphin Cruise', category: 'adventure', cost: 2500, time: '09:00 AM', duration: 240 },
+              { name: 'Mandovi River Luxury Sunset Cruise with Folk Dance', category: 'entertainment', cost: 1200, time: '05:30 PM', duration: 120 },
+              { name: 'Authentic Goan Seafood Tasting at Martin Corner', category: 'food', cost: 1400, time: '08:30 PM', duration: 90 },
+            ]
+          },
+          {
+            cityName: 'Gokarna',
+            arrivalDay: Math.ceil(numDays / 2) + 1,
+            departureDay: numDays,
+            activities: [
+              { name: 'Om Beach to Half Moon Beach Cliff Trail Trek', category: 'adventure', cost: 800, time: '08:30 AM', duration: 180 },
+              { name: 'Namaste Cafe Sunset Dinner Overlooking Arabian Sea', category: 'food', cost: 1100, time: '06:00 PM', duration: 120 },
+            ]
+          }
+        ]
+      } else if (destinationType === 'royal' || interest === 'heritage') {
+        chosenCities = [
+          { name: 'Jaipur', region: 'Rajasthan', days: Math.ceil(numDays / 2), reason: 'Pink City grand forts, royal palaces, and jewelry bazaars.' },
+          { name: 'Udaipur', region: 'Mewar, Rajasthan', days: Math.floor(numDays / 2), reason: 'City of Lakes, romantic boat rides, and City Palace.' }
+        ]
+        stopsData = [
+          {
+            cityName: 'Jaipur',
+            arrivalDay: 1,
+            departureDay: Math.ceil(numDays / 2),
+            activities: [
+              { name: 'Amber Fort Elephant Trail & Sheesh Mahal Tour', category: 'sightseeing', cost: 1000, time: '09:30 AM', duration: 180 },
+              { name: 'Hawa Mahal & Old City Johari Bazaar Photo Walk', category: 'culture', cost: 500, time: '03:00 PM', duration: 120 },
+              { name: 'Chokhi Dhani Royal Rajasthani Cultural Dinner & Folk Dance', category: 'food', cost: 1600, time: '07:30 PM', duration: 180 },
+            ]
+          },
+          {
+            cityName: 'Udaipur',
+            arrivalDay: Math.ceil(numDays / 2) + 1,
+            departureDay: numDays,
+            activities: [
+              { name: 'Lake Pichola Royal Boat Cruise & Jag Mandir Island', category: 'nature', cost: 1500, time: '10:00 AM', duration: 150 },
+              { name: 'Udaipur City Palace Museum Guided Tour', category: 'sightseeing', cost: 800, time: '02:30 PM', duration: 180 },
+            ]
+          }
+        ]
+      } else {
+        chosenCities = [
+          { name: 'Manali', region: 'Himachal Pradesh', days: Math.ceil(numDays / 2), reason: 'Snow-capped peaks, pine valleys, and adrenaline sports.' },
+          { name: 'Solang Valley', region: 'Himachal Pradesh', days: Math.floor(numDays / 2), reason: 'Tandem paragliding, ATV rides, and Atal Tunnel drive.' }
+        ]
+        stopsData = [
+          {
+            cityName: 'Manali',
+            arrivalDay: 1,
+            departureDay: Math.ceil(numDays / 2),
+            activities: [
+              { name: 'Solang Valley High-Fly Tandem Paragliding', category: 'adventure', cost: 3200, time: '09:30 AM', duration: 150 },
+              { name: 'Old Manali Bohemian Cafes & Live Music Trail', category: 'food', cost: 1200, time: '04:00 PM', duration: 180 },
+            ]
+          },
+          {
+            cityName: 'Solang Valley',
+            arrivalDay: Math.ceil(numDays / 2) + 1,
+            departureDay: numDays,
+            activities: [
+              { name: 'Drive Through Atal Tunnel to Sissu Glacier Waterfall', category: 'nature', cost: 2000, time: '08:30 AM', duration: 240 },
+              { name: 'Jogini Waterfall Pine Forest Nature Trek', category: 'adventure', cost: 600, time: '02:00 PM', duration: 180 },
+            ]
+          }
+        ]
+      }
+
+      const budgetSplit: Record<ExpenseCategory, number> = {
+        transportation: Math.round(numBudget * 0.26),
+        accommodation: Math.round(numBudget * 0.38),
+        activities: Math.round(numBudget * 0.18),
+        food: Math.round(numBudget * 0.14),
+        other: Math.round(numBudget * 0.04),
+      }
+
+      setResult({
+        title: `${numDays}-Day ${interest.charAt(0).toUpperCase() + interest.slice(1)} Escape from ${originCity}`,
+        summary: `A carefully paced ${numDays}-day ${travelStyle} travel route balancing ${interest} with scenic highlights, designed to stay comfortably within ₹${numBudget.toLocaleString('en-IN')}.`,
+        cities: chosenCities,
+        suggestedStops: stopsData,
+        budgetDistribution: budgetSplit,
+        totalEstimatedCost: numBudget,
+      })
+      notify('✨ Smart itinerary generated!')
+      setLoading(false)
+    }, 400)
+  }
+
+  function handleCreateTripFromRecommendation() {
     if (!result) return
-    const tripId = `trip-ai-${Date.now()}`
-    const start = new Date(Date.now() + 14 * 86400000)
-    const date = (offset: number) => new Date(start.getTime() + offset * 86400000).toISOString().slice(0, 10)
-    const trip: Trip = { id: tripId, ownerId: currentUser?.id || 'demo-user', name: result.title, description: result.summary, currency: 'INR', startDate: date(0), endDate: date(Number(days) - 1), budgetLimit: result.totalEstimatedCost, status: 'upcoming', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }
-    dispatch({ type: 'CREATE_TRIP', trip })
-    result.suggestedStops.forEach((stop, index) => {
-      const city = state.db.cities.find((item) => item.name.toLowerCase().includes(stop.cityName.toLowerCase())) || state.db.cities[0]
-      const stopId = `stop-${tripId}-${index}`
-      const tripStop: TripStop = { id: stopId, tripId, cityId: city.id, arrivalDate: date(stop.arrivalDay - 1), departureDate: date(stop.departureDay - 1), order: index }
-      dispatch({ type: 'ADD_STOP', stop: tripStop })
-      stop.activities.forEach((activity, activityIndex) => {
-        const catalogue = state.db.activities.find((item) => item.name.toLowerCase().includes(activity.name.toLowerCase())) || state.db.activities[0]
-        const tripActivity: TripActivity = { id: `activity-${tripId}-${index}-${activityIndex}`, tripId, stopId, activityId: catalogue.id, date: tripStop.arrivalDate, startTime: activity.time, durationMinutes: activity.duration, estimatedCost: activity.cost, order: activityIndex }
-        dispatch({ type: 'ADD_TRIP_ACTIVITY', activity: tripActivity })
+
+    const tripId = `trip-custom-${Date.now()}`
+    const now = new Date().toISOString()
+    const startDate = new Date().toISOString().split('T')[0]
+    const endDate = new Date(Date.now() + parseInt(days, 10) * 86400000).toISOString().split('T')[0]
+
+    const newTrip: Trip = {
+      id: tripId,
+      ownerId: currentUser?.id || 'user-default',
+      name: result.title,
+      description: result.summary,
+      startDate,
+      endDate,
+      coverImageUrl: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80',
+      status: 'upcoming',
+      budgetLimit: result.totalEstimatedCost,
+      currency: 'INR',
+      createdAt: now,
+      updatedAt: now,
+    }
+
+    dispatch({ type: 'CREATE_TRIP', trip: newTrip })
+
+    result.suggestedStops.forEach((s, sIdx) => {
+      const cityMatch = state.db.cities.find((c) => c.name.toLowerCase().includes(s.cityName.toLowerCase())) || state.db.cities[0]
+      const stopId = `stop-${tripId}-${sIdx + 1}`
+      const stopArrival = new Date(Date.now() + (s.arrivalDay - 1) * 86400000).toISOString().split('T')[0]
+      const stopDeparture = new Date(Date.now() + (s.departureDay - 1) * 86400000).toISOString().split('T')[0]
+      
+      const newStop: TripStop = {
+        id: stopId,
+        tripId,
+        cityId: cityMatch.id,
+        order: sIdx + 1,
+        arrivalDate: stopArrival,
+        departureDate: stopDeparture,
+        notes: `Stop ${sIdx + 1}: Explore ${s.cityName}`,
+      }
+      dispatch({ type: 'ADD_STOP', stop: newStop })
+
+      s.activities.forEach((act, aIdx) => {
+        const actId = `act-rec-${Date.now()}-${aIdx}`
+        const newTripAct: TripActivity = {
+          id: `trip-act-${Date.now()}-${aIdx}`,
+          tripId,
+          stopId,
+          activityId: actId,
+          date: stopArrival,
+          startTime: act.time || '10:00',
+          durationMinutes: act.duration || 120,
+          estimatedCost: act.cost || 500,
+          order: aIdx + 1,
+          notes: 'AI Recommended Landmark',
+        }
+        dispatch({ type: 'ADD_TRIP_ACTIVITY', activity: newTripAct })
       })
     })
-    notify('Itinerary added to your workspace.')
+
+    notify('🎉 Trip created & added to your workspace! Opening full itinerary.')
     navigate(`/trips/${tripId}/itinerary`)
   }
 
-  return <div className="mx-auto max-w-5xl space-y-8">
-    <SectionHeading eyebrow="Live travel intelligence" title="Build your next trip" description="Generate a grounded itinerary from the TripWise catalogue, shaped around your time, budget, and travel style." />
-    <Card><form onSubmit={handleSubmit} className="space-y-6">
-      <div className="grid gap-5 sm:grid-cols-3">
-        <Field label="Starting city" htmlFor="origin-city"><div className="relative"><MapPin size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink/35" /><TextInput id="origin-city" value={originCity} onChange={(event) => setOriginCity(event.target.value)} className="pl-10" required /></div></Field>
-        <Field label="Days" htmlFor="trip-days"><div className="relative"><Calendar size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink/35" /><TextInput id="trip-days" type="number" min="1" max="30" value={days} onChange={(event) => setDays(event.target.value)} className="pl-10" required /></div></Field>
-        <Field label="Budget (INR)" htmlFor="trip-budget"><div className="relative"><DollarSign size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink/35" /><TextInput id="trip-budget" type="number" min="1000" step="1000" value={budget} onChange={(event) => setBudget(event.target.value)} className="pl-10" required /></div></Field>
+  const categoryData = result ? (Object.entries(result.budgetDistribution) as [ExpenseCategory, number][]).map(([cat, amt]) => ({
+    name: formatCategoryLabel(cat),
+    amount: amt,
+    category: cat,
+  })) : []
+
+  return (
+    <div className="mx-auto max-w-5xl space-y-8">
+      {/* Top Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-50 border border-indigo-200 text-[#4F46E5] text-[11px] font-bold uppercase tracking-wider mb-2">
+            <Sparkles size={13} /> Groq LLaMA 3.3 Travel Architect
+          </div>
+          <h1 className="font-display text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl">
+            AI Trip Planner
+          </h1>
+          <p className="mt-2 text-sm text-slate-500 max-w-2xl">
+            Generate constraint-aware day-by-day travel routes across 30+ Indian destinations with real activity timings, cost estimates, and budget breakdown.
+          </p>
+        </div>
       </div>
-<<<<<<< HEAD
 
       {/* One-Tap Quick Prompt Pills */}
       <div className="space-y-2">
@@ -286,7 +522,7 @@ export function SmartRecommendationPage() {
                             </p>
                           </div>
                           <span className="font-display font-bold text-slate-800 shrink-0">
-                            {act.cost ? formatCurrency(act.cost) : '₹450'}
+                            {act.cost ? formatCurrency(act.cost) : 'Free'}
                           </span>
                         </div>
                       ))}
@@ -335,11 +571,4 @@ export function SmartRecommendationPage() {
       )}
     </div>
   )
-=======
-      <div className="grid gap-5 sm:grid-cols-3"><Field htmlFor="travel-style" label="Travel style"><Select id="travel-style" value={travelStyle} onChange={(event) => setTravelStyle(event.target.value)} options={[{ value: 'balanced', label: 'Balanced' }, { value: 'budget', label: 'Budget smart' }, { value: 'luxury', label: 'Comfort first' }]} /></Field><Field htmlFor="interest" label="Interest"><Select id="interest" value={interest} onChange={(event) => setInterest(event.target.value)} options={[{ value: 'adventure', label: 'Adventure' }, { value: 'food', label: 'Food' }, { value: 'heritage', label: 'Heritage' }, { value: 'nature', label: 'Nature' }]} /></Field><Field htmlFor="destination-type" label="Destination type"><Select id="destination-type" value={destinationType} onChange={(event) => setDestinationType(event.target.value)} options={[{ value: 'mountains', label: 'Mountains' }, { value: 'coastal', label: 'Coastal' }, { value: 'heritage', label: 'Heritage' }, { value: 'nature', label: 'Nature' }]} /></Field></div>
-      <Button type="submit" icon={<Sparkles size={16} />} disabled={loading}>{loading ? 'Generating from live catalogue...' : 'Generate itinerary'}</Button>
-    </form></Card>
-    {result ? <Card className="space-y-6"><div><p className="eyebrow">API-grounded plan</p><h2 className="mt-2 font-display text-3xl text-ink">{result.title}</h2><p className="body-copy mt-2">{result.summary}</p></div><div className="grid gap-3 sm:grid-cols-3">{result.cities.map((city) => <div key={city.name} className="rounded-xl border border-line bg-white p-4"><p className="font-semibold text-ink">{city.name}</p><p className="mt-1 text-xs text-ink/55">{city.days} day{city.days === 1 ? '' : 's'} · {city.reason}</p></div>)}</div><div className="flex flex-wrap gap-3">{Object.entries(result.budgetDistribution).map(([category, amount]) => <span key={category} className="rounded-full bg-parchment px-3 py-1.5 text-xs font-semibold text-ink/70">{category}: {formatCurrency(amount)}</span>)}</div>{result.proTips.length ? <div><p className="font-semibold text-ink">Travel notes</p><ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-ink/65">{result.proTips.map((tip) => <li key={tip}>{tip}</li>)}</ul></div> : null}<Button onClick={createTrip}>Add to my itinerary</Button></Card> : null}
-  </div>
->>>>>>> 6ba8a5d (fix: stabilize merged AI and itinerary flows)
 }
