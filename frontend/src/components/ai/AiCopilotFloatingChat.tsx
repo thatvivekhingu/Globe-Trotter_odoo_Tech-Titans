@@ -155,23 +155,54 @@ I'd love to help you plan that! You can explore our pre-curated **MakeMyTrip Hol
 
     setMessages((prev) => [...prev, userMsg])
     setInput('')
-    setLoading(true)
+    const groqKey = localStorage.getItem('GLOBETROTTER_GROQ_KEY') || import.meta.env.VITE_GROQ_API_KEY || ''
+    let selectedModel = localStorage.getItem('GLOBETROTTER_AI_MODEL') || 'llama-3.3-70b-versatile'
+    if (selectedModel === 'openai/gpt-oss-120b' || selectedModel === 'llama-3.3-70b') selectedModel = 'llama-3.3-70b-versatile'
 
-    try {
-      const response = await apiClient.post<{ reply: string }>('/ai/chat', { message: query })
-      if (response?.data?.reply) {
-        setMessages((prev) => [...prev, { id: `ai-${Date.now()}`, sender: 'ai', text: response.data.reply, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }])
-      } else {
-        throw new Error('Empty response')
+    if (groqKey && selectedModel !== 'local-engine') {
+      try {
+        const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${groqKey}`,
+          },
+          body: JSON.stringify({
+            model: selectedModel,
+            messages: [
+              {
+                role: 'system',
+                content: 'You are GlobeTrotter AI Copilot, an expert Indian & global travel architect. Provide deeply helpful, authentic, practical travel advice with specific recommendations, timings, and estimated costs in ₹ INR.',
+              },
+              { role: 'user', content: query },
+            ],
+          }),
+        })
+        const data = await response.json()
+        const aiText = data?.choices?.[0]?.message?.content
+        if (aiText) {
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: `ai-${Date.now()}`,
+              sender: 'ai',
+              text: aiText,
+              timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            },
+          ])
+          setLoading(false)
+          return
+        }
+      } catch (err) {
+        console.warn('Groq LLaMA API call failed, falling back to smart reply:', err)
       }
-    } catch {
-      // Intelligent in-browser fallback AI travel response
-      await new Promise((resolve) => setTimeout(resolve, 400))
-      const fallbackReply = generateSmartAiResponse(query)
-      setMessages((prev) => [...prev, { id: `ai-${Date.now()}`, sender: 'ai', text: fallbackReply, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }])
-    } finally {
-      setLoading(false)
     }
+
+    // Intelligent in-browser fallback AI travel response
+    await new Promise((resolve) => setTimeout(resolve, 400))
+    const fallbackReply = generateSmartAiResponse(query)
+    setMessages((prev) => [...prev, { id: `ai-${Date.now()}`, sender: 'ai', text: fallbackReply, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }])
+    setLoading(false)
   }
 
   return (

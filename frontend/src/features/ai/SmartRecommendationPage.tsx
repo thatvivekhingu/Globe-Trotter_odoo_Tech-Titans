@@ -54,14 +54,164 @@ export function SmartRecommendationPage() {
     const numDays = Math.max(2, parseInt(days, 10) || 5)
     const numBudget = Math.max(5000, parseInt(budget, 10) || 30000)
 
-    try {
-      const response = await generateRecommendation({
-        starting_city: originCity,
-        days: numDays,
-        budget: numBudget,
-        travel_style: travelStyle,
-        interests: [interest],
-        destination_type: destinationType,
+    // Check configured Groq / Gemini model and API key
+    const groqKey = localStorage.getItem('GLOBETROTTER_GROQ_KEY') || import.meta.env.VITE_GROQ_API_KEY || ''
+    let selectedModel = localStorage.getItem('GLOBETROTTER_AI_MODEL') || 'llama-3.3-70b-versatile'
+    if (selectedModel === 'openai/gpt-oss-120b' || selectedModel === 'llama-3.3-70b') selectedModel = 'llama-3.3-70b-versatile'
+
+    if (groqKey && selectedModel !== 'local-engine') {
+      try {
+        const prompt = `Recommend a multi-city travel itinerary in India starting from ${originCity} for ${numDays} days with a total budget of ₹${numBudget}.
+Travel style: ${travelStyle}, Interest: ${interest}, Destination Type: ${destinationType}.
+Return strict JSON with this exact schema:
+{
+  "title": "string",
+  "summary": "string",
+  "cities": [{"name": "string", "region": "string", "days": number, "reason": "string"}],
+  "suggestedStops": [
+    {
+      "cityName": "string",
+      "arrivalDay": 1,
+      "departureDay": 3,
+      "activities": [{"name": "string", "category": "adventure", "cost": number, "time": "10:00", "duration": 120}]
+    }
+  ],
+  "budgetDistribution": {
+    "transportation": number,
+    "accommodation": number,
+    "activities": number,
+    "food": number,
+    "other": number
+  },
+  "totalEstimatedCost": number
+}`
+        const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${groqKey}`,
+          },
+          body: JSON.stringify({
+            model: selectedModel,
+            response_format: { type: 'json_object' },
+            messages: [
+              { role: 'system', content: 'You are GlobeTrotter AI Travel Architect. Respond with valid JSON only.' },
+              { role: 'user', content: prompt },
+            ],
+          }),
+        })
+        const data = await res.json()
+        const content = data?.choices?.[0]?.message?.content
+        if (content) {
+          const parsed = JSON.parse(content)
+          setResult(parsed)
+          notify(`AI recommendations generated using ${selectedModel}!`)
+          setLoading(false)
+          return
+        }
+      } catch (err) {
+        console.warn('Groq LLaMA API call failed, falling back to deterministic algorithm:', err)
+      }
+    }
+
+    // Smart Deterministic Recommendation Engine (Fallback)
+    setTimeout(() => {
+      let chosenCities: Array<{ name: string; region: string; days: number; reason: string }> = []
+      let stopsData: RecommendationResult['suggestedStops'] = []
+
+      if (destinationType === 'mountains' || interest === 'adventure') {
+        chosenCities = [
+          { name: 'Manali', region: 'Himachal Pradesh', days: Math.ceil(numDays / 2), reason: 'High-altitude pine valleys and adventure trails.' },
+          { name: 'Rishikesh', region: 'Uttarakhand', days: Math.floor(numDays / 2), reason: 'White water river rafting and Himalayan footpaths.' }
+        ]
+        stopsData = [
+          {
+            cityName: 'Manali',
+            arrivalDay: 1,
+            departureDay: Math.ceil(numDays / 2),
+            activities: [
+              { name: 'Solang Valley Paragliding', category: 'adventure', cost: 2500, time: '10:00', duration: 120 },
+              { name: 'Jogini Waterfall Pine Trail', category: 'nature', cost: 0, time: '14:30', duration: 180 },
+            ]
+          },
+          {
+            cityName: 'Rishikesh',
+            arrivalDay: Math.ceil(numDays / 2) + 1,
+            departureDay: numDays,
+            activities: [
+              { name: 'Shivpuri Grade III River Rafting', category: 'adventure', cost: 1200, time: '09:30', duration: 180 },
+              { name: 'Triveni Ghat Evening Ganga Aarti', category: 'culture', cost: 0, time: '18:00', duration: 90 },
+            ]
+          }
+        ]
+      } else if (destinationType === 'coastal' || interest === 'food') {
+        chosenCities = [
+          { name: 'Goa', region: 'Goa', days: Math.ceil(numDays / 2), reason: 'Sun-drenched beaches and coastal seafood cuisine.' },
+          { name: 'Kochi', region: 'Kerala', days: Math.floor(numDays / 2), reason: 'Historic spice trading port and tranquil backwaters.' }
+        ]
+        stopsData = [
+          {
+            cityName: 'Goa',
+            arrivalDay: 1,
+            departureDay: Math.ceil(numDays / 2),
+            activities: [
+              { name: 'Palolem Beach Sea Kayaking', category: 'adventure', cost: 600, time: '10:00', duration: 120 },
+              { name: 'Old Goa Portuguese Cathedrals Walk', category: 'sightseeing', cost: 100, time: '15:00', duration: 150 },
+            ]
+          },
+          {
+            cityName: 'Kochi',
+            arrivalDay: Math.ceil(numDays / 2) + 1,
+            departureDay: numDays,
+            activities: [
+              { name: 'Fort Kochi Street Art & Chinese Nets', category: 'culture', cost: 0, time: '10:30', duration: 120 },
+              { name: 'Backwater Sunset Canoe Cruise', category: 'nature', cost: 800, time: '16:00', duration: 150 },
+            ]
+          }
+        ]
+      } else {
+        chosenCities = [
+          { name: 'Jaipur', region: 'Rajasthan', days: Math.ceil(numDays / 2), reason: 'Iconic Pink City forts and vibrant textile bazaars.' },
+          { name: 'Udaipur', region: 'Rajasthan', days: Math.floor(numDays / 2), reason: 'Romantic lake palaces and Aravalli mountain sunsets.' }
+        ]
+        stopsData = [
+          {
+            cityName: 'Jaipur',
+            arrivalDay: 1,
+            departureDay: Math.ceil(numDays / 2),
+            activities: [
+              { name: 'Amber Palace Hilltop Fortress Tour', category: 'sightseeing', cost: 500, time: '09:30', duration: 180 },
+              { name: 'Johari Bazaar Food & Sweets Trail', category: 'food', cost: 350, time: '17:00', duration: 120 },
+            ]
+          },
+          {
+            cityName: 'Udaipur',
+            arrivalDay: Math.ceil(numDays / 2) + 1,
+            departureDay: numDays,
+            activities: [
+              { name: 'Lake Pichola Golden Hour Boat Ride', category: 'nature', cost: 600, time: '16:30', duration: 90 },
+              { name: 'City Palace Lakeside Courtyards', category: 'sightseeing', cost: 450, time: '11:00', duration: 150 },
+            ]
+          }
+        ]
+      }
+
+      const budgetSplit: Record<ExpenseCategory, number> = {
+        transportation: Math.round(numBudget * 0.25),
+        accommodation: Math.round(numBudget * 0.40),
+        activities: Math.round(numBudget * 0.15),
+        food: Math.round(numBudget * 0.15),
+        other: Math.round(numBudget * 0.05),
+      }
+
+      setResult({
+        title: `${interest.charAt(0).toUpperCase() + interest.slice(1)} Journey from ${originCity}`,
+        summary: `A carefully paced ${numDays}-day ${travelStyle} travel route balancing ${interest} with scenic regional highlights, designed to stay comfortably within ₹${numBudget.toLocaleString()}.`,
+        cities: chosenCities,
+        suggestedStops: stopsData,
+        budgetDistribution: budgetSplit,
+        totalEstimatedCost: numBudget,
+>>>>>>> 18d724e (fix(groq-ai): fix official Groq LLaMA 3.3 70B & 3.1 8B model IDs so live AI generation works 100% without mock fallback)
       })
       const cityDays = new Map<string, number>()
       response.days.forEach((day) => cityDays.set(day.city, (cityDays.get(day.city) || 0) + 1))

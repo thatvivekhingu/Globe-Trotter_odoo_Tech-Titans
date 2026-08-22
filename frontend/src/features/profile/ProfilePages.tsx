@@ -120,7 +120,11 @@ export function ProfilePage() {
 export function SettingsPage() {
   const { notify } = useTripWise()
   const [groqKey, setGroqKey] = useState(() => localStorage.getItem('GLOBETROTTER_GROQ_KEY') || import.meta.env.VITE_GROQ_API_KEY || '')
-  const [selectedModel, setSelectedModel] = useState(() => localStorage.getItem('GLOBETROTTER_AI_MODEL') || 'openai/gpt-oss-120b')
+  const [selectedModel, setSelectedModel] = useState(() => {
+    const saved = localStorage.getItem('GLOBETROTTER_AI_MODEL')
+    if (!saved || saved.includes('gpt-oss') || saved.includes('qwen')) return 'llama-3.3-70b-versatile'
+    return saved
+  })
   const [testing, setTesting] = useState(false)
   const [testResult, setTestResult] = useState<string | null>(null)
 
@@ -200,10 +204,11 @@ export function SettingsPage() {
                 onChange={(e) => setSelectedModel(e.target.value)}
                 className="w-full px-3.5 py-2.5 rounded-xl border border-line bg-white text-sm font-medium"
               >
-                <option value="openai/gpt-oss-120b">Groq GPT-OSS 120B / LLaMA Architecture (Sub-second · Recommended)</option>
-                <option value="qwen/qwen3.6-27b">Groq Qwen 3.6 27B (High-Precision Reasoning)</option>
-                <option value="openai/gpt-oss-20b">Groq GPT-OSS 20B (Ultra-Lightweight & Fast)</option>
-                <option value="local-engine">GlobeTrotter Neural Deterministic Engine (Offline / Local)</option>
+                <option value="llama-3.3-70b-versatile">Groq LLaMA 3.3 70B Versatile (Recommended · Deep Travel Reasoning)</option>
+                <option value="llama-3.1-8b-instant">Groq LLaMA 3.1 8B Instant (Ultra-Fast 800+ tokens/sec)</option>
+                <option value="mixtral-8x7b-32768">Groq Mixtral 8x7B (32k Context Window)</option>
+                <option value="gemma2-9b-it">Google Gemma 2 9B IT (High Instruction Following)</option>
+                <option value="local-engine">GlobeTrotter Offline Local Engine</option>
               </select>
             </div>
 
