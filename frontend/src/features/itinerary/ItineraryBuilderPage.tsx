@@ -332,13 +332,13 @@ export function ItineraryBuilderPage() {
                   selectedActivityId={selectedActivityId}
                   onUpdateStop={(changes) => day.stop && dispatch({ type: 'UPDATE_STOP', stopId: day.stop.id, changes })}
                   onRemoveStop={() => day.stop && setDeleteStopId(day.stop.id)}
+                  onMoveStopUp={() => undefined}
+                  onMoveStopDown={() => undefined}
                   onRemoveActivity={(id) => {
                     dispatch({ type: 'REMOVE_TRIP_ACTIVITY', activityId: id })
                     notify('Activity removed.')
                   }}
                   onMoveActivity={moveActivity}
-                  onMoveStopUp={() => {}}
-                  onMoveStopDown={() => {}}
                 />
               ))}
             </div>

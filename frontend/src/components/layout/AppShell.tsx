@@ -1,6 +1,11 @@
 import { BarChart3, Bell, Building2, CheckSquare, Compass, CreditCard, DollarSign, Flame, Globe, LayoutDashboard, Map, Menu, Plane, Plus, Search, Settings, Shield, Sparkles, UserCircle, WalletCards } from 'lucide-react'
+<<<<<<< HEAD
 import { useState, useEffect, type ReactNode } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
+=======
+import { useEffect, useState, type FormEvent, type ReactNode } from 'react'
+import { NavLink, useLocation, useNavigate } from 'react-router-dom'
+>>>>>>> 6ba8a5d (fix: stabilize merged AI and itinerary flows)
 import { useTripWise } from '../../state/useTripWise'
 import { AiCopilotFloatingChat } from '../ai/AiCopilotFloatingChat'
 import { CommandPaletteModal } from '../navigation/CommandPaletteModal'
@@ -65,8 +70,21 @@ function SidebarLink({ label, to, icon: Icon, badge }: { label: string; to: stri
   )
 }
 
+<<<<<<< HEAD
 function TopBar({ onMenu, onOpenCommandPalette }: { onMenu: () => void; onOpenCommandPalette: () => void }) {
+=======
+import { CommandPaletteModal } from './CommandPaletteModal'
+
+function TopBar({ onMenu }: { onMenu: () => void }) {
+  const navigate = useNavigate()
+>>>>>>> 6ba8a5d (fix: stabilize merged AI and itinerary flows)
   const { currentUser } = useTripWise()
+  const [query, setQuery] = useState('')
+
+  function handleSearch(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (query.trim()) navigate(`/discover/cities?q=${encodeURIComponent(query.trim())}`)
+  }
 
   return (
     <header className="sticky top-0 z-30 border-b border-slate-200/80 bg-white/85 backdrop-blur-md">
@@ -265,7 +283,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-slate-900 relative antialiased selection:bg-[#B4F056] selection:text-[#0F172A]">
-      <TopBar onMenu={() => setDrawerOpen(true)} onOpenCommandPalette={() => setCommandPaletteOpen(true)} />
+      <TopBar onMenu={() => setDrawerOpen(true)} />
       <Sidebar />
       <MobileDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
       <main key={location.pathname} className="min-w-0 pb-24 lg:ml-60 lg:pb-12">

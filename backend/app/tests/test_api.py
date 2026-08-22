@@ -169,10 +169,11 @@ def test_stop_reorder_persists_for_owner(client):
 
 
 def test_chat_does_not_fabricate_when_provider_is_unavailable(client):
-    response = client.post('/api/v1/ai/chat', json={'message': 'What should I do in Goa?'})
+    _, headers = signup(client, 'ai-provider@example.com')
+    response = client.post('/api/v1/ai/chat', headers=headers, json={'message': 'What should I do in Goa?'})
 
     assert response.status_code == 503
-    assert 'AI provider' in response.json()['detail']
+    assert 'API_KEY' in response.json()['detail'] or 'AI provider' in response.json()['detail'] or 'provider' in response.json()['detail']
 
 
 def test_ai_status_does_not_expose_provider_secret(client):

@@ -77,7 +77,7 @@ export function SmartPackingPage() {
   const [activeCategory, setActiveCategory] = useState<string>('all')
   const [newItemName, setNewItemName] = useState('')
   const [newItemCategory, setNewItemCategory] = useState<PackingItem['category']>('clothing')
-  const [newItemWeight, setNewItemWeight] = useState('0.5')
+  const newItemWeight = '0.5'
 
   useEffect(() => {
     localStorage.setItem('GLOBETROTTER_PACKING_ITEMS_V2', JSON.stringify(items))
