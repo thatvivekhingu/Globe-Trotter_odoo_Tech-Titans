@@ -1,6 +1,6 @@
 import { BarChart3, Bell, Building2, CheckSquare, Compass, CreditCard, DollarSign, Flame, Globe, LayoutDashboard, Map, Menu, Plane, Plus, Search, Settings, Shield, Sparkles, UserCircle, WalletCards } from 'lucide-react'
-import { useEffect, useState, type FormEvent, type ReactNode } from 'react'
-import { NavLink, useLocation, useNavigate } from 'react-router-dom'
+import { useEffect, useState, type ReactNode } from 'react'
+import { NavLink, useLocation } from 'react-router-dom'
 import { useTripWise } from '../../state/useTripWise'
 import { AiCopilotFloatingChat } from '../ai/AiCopilotFloatingChat'
 import { CommandPaletteModal } from '../navigation/CommandPaletteModal'
@@ -66,24 +66,17 @@ function SidebarLink({ label, to, icon: Icon, badge }: { label: string; to: stri
 }
 
 function TopBar({ onMenu, onOpenCommandPalette }: { onMenu: () => void; onOpenCommandPalette?: () => void }) {
-  const navigate = useNavigate()
   const { currentUser } = useTripWise()
-  const [query, setQuery] = useState('')
-
-  function handleSearch(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    if (query.trim()) navigate(`/discover/cities?q=${encodeURIComponent(query.trim())}`)
-  }
 
   return (
-    <header className="sticky top-0 z-30 border-b border-slate-200/80 bg-white/85 backdrop-blur-md">
+    <header className="fixed top-0 inset-x-0 z-40 h-16 border-b border-slate-800/90 bg-[#0B0F19]/95 text-white backdrop-blur-xl shadow-lg shadow-black/20">
       <div className="flex h-16 items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
         <div className="flex items-center gap-3">
-          <IconButton label="Open navigation" size="sm" className="lg:hidden" onClick={onMenu}>
+          <IconButton label="Open navigation" size="sm" className="lg:hidden text-slate-300 hover:text-white hover:bg-slate-800" onClick={onMenu}>
             <Menu size={18} />
           </IconButton>
           <NavLink to="/dashboard" className="group">
-            <GlobeTrotterLogo size={38} />
+            <GlobeTrotterLogo size={38} dark={true} />
           </NavLink>
         </div>
 
@@ -91,13 +84,13 @@ function TopBar({ onMenu, onOpenCommandPalette }: { onMenu: () => void; onOpenCo
         <button
           type="button"
           onClick={onOpenCommandPalette}
-          className="hidden max-w-md flex-1 md:flex items-center justify-between h-10 rounded-full border border-slate-200/90 bg-slate-50/90 px-4 text-xs text-slate-500 hover:border-[#4F46E5] hover:bg-white transition-all text-left cursor-pointer shadow-2xs group"
+          className="hidden max-w-md flex-1 md:flex items-center justify-between h-10 rounded-full border border-slate-700/80 bg-slate-900/90 px-4 text-xs text-slate-400 hover:border-indigo-500 hover:bg-slate-800 transition-all text-left cursor-pointer shadow-inner group"
         >
           <div className="flex items-center gap-2.5">
-            <Search size={15} className="text-slate-400 group-hover:text-[#4F46E5]" />
+            <Search size={15} className="text-slate-400 group-hover:text-[#B4F056] transition-colors" />
             <span className="text-slate-400 font-medium">Search 30+ destinations, flights, visa, OCR...</span>
           </div>
-          <kbd className="hidden rounded-md border border-slate-200 bg-white px-2 py-0.5 text-[10px] font-bold text-slate-600 lg:inline shadow-2xs">
+          <kbd className="hidden rounded-md border border-slate-700 bg-slate-800 px-2 py-0.5 text-[10px] font-bold text-slate-300 lg:inline shadow-2xs">
             ⌘ K
           </kbd>
         </button>
@@ -106,28 +99,28 @@ function TopBar({ onMenu, onOpenCommandPalette }: { onMenu: () => void; onOpenCo
         <div className="flex items-center gap-3">
           <LivePresenceBar />
 
-          <div className="hidden xl:flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-[11px] font-bold text-emerald-700">
-            <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
+          <div className="hidden xl:flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-950/80 border border-emerald-500/40 text-[11px] font-bold text-emerald-300">
+            <span className="size-2 rounded-full bg-emerald-400 animate-pulse" />
             Groq LLaMA 3.3 Active
           </div>
 
-          <Button asChild size="sm" icon={<Plus size={14} />} className="hidden sm:inline-flex rounded-full">
+          <Button asChild size="sm" icon={<Plus size={14} />} className="hidden sm:inline-flex rounded-full bg-[#B4F056] text-slate-950 hover:bg-[#a5e63f] font-bold">
             <NavLink to="/trips/new">New Trip</NavLink>
           </Button>
 
-          <IconButton label="Notifications" size="sm" className="relative">
+          <IconButton label="Notifications" size="sm" className="relative text-slate-300 hover:text-white hover:bg-slate-800">
             <Bell size={17} />
-            <span className="absolute top-1.5 right-1.5 size-2 rounded-full bg-[#4F46E5]" />
+            <span className="absolute top-1.5 right-1.5 size-2 rounded-full bg-[#B4F056]" />
           </IconButton>
 
-          <NavLink to="/profile" className="flex items-center gap-2 rounded-full p-0.5 hover:ring-2 hover:ring-slate-200 transition-all">
+          <NavLink to="/profile" className="flex items-center gap-2 rounded-full p-0.5 hover:ring-2 hover:ring-slate-700 transition-all">
             <ImageWithFallback
               src={currentUser?.avatarUrl}
               alt="Profile portrait"
-              className="size-8 rounded-full object-cover border border-slate-200"
+              className="size-8 rounded-full object-cover border border-slate-700"
               fallbackClassName="size-8 rounded-full"
             />
-            <span className="hidden text-xs font-semibold text-slate-700 pr-1.5 sm:inline">
+            <span className="hidden text-xs font-semibold text-slate-200 pr-1.5 sm:inline">
               {currentUser?.name.split(' ')[0] || 'Account'}
             </span>
           </NavLink>
@@ -271,11 +264,18 @@ export function AppShell({ children }: { children: ReactNode }) {
   }, [])
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-slate-900 relative antialiased selection:bg-[#B4F056] selection:text-[#0F172A]">
-      <TopBar onMenu={() => setDrawerOpen(true)} />
+    <div className="min-h-screen bg-[#F8FAFC] text-slate-900 relative antialiased selection:bg-[#B4F056] selection:text-[#0F172A] overflow-x-hidden">
+      {/* Apple Ambient Frosted Glass Blur Blobs */}
+      <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
+        <div className="absolute -top-24 right-1/4 size-[500px] rounded-full bg-linear-to-br from-indigo-400/15 via-purple-300/10 to-transparent blur-3xl" />
+        <div className="absolute top-1/3 -left-20 size-[450px] rounded-full bg-linear-to-tr from-teal-300/15 via-emerald-200/10 to-transparent blur-3xl" />
+        <div className="absolute bottom-10 right-10 size-[400px] rounded-full bg-linear-to-tl from-amber-300/15 via-orange-200/10 to-transparent blur-3xl" />
+      </div>
+
+      <TopBar onMenu={() => setDrawerOpen(true)} onOpenCommandPalette={() => setCommandPaletteOpen(true)} />
       <Sidebar />
       <MobileDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
-      <main key={location.pathname} className="min-w-0 pb-24 lg:ml-60 lg:pb-12">
+      <main key={location.pathname} className="relative z-10 min-w-0 pt-16 pb-24 lg:ml-60 lg:pb-12">
         <div className="mx-auto min-w-0 max-w-[1440px] px-4 py-6 sm:px-6 sm:py-8 lg:px-8 xl:px-10">
           {children}
         </div>
