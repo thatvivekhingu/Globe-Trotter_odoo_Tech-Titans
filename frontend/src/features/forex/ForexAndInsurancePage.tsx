@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { ArrowRightLeft, Check, CheckCircle2, CreditCard, FileText, Luggage, Plane, ShieldCheck, Tag, Truck, Umbrella, X } from 'lucide-react'
 import { Card } from '../../components/ui/Card'
 import { Button } from '../../components/ui/Button'
