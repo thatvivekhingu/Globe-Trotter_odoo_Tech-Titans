@@ -5,6 +5,7 @@ import { Button } from '../../components/ui/Button'
 import { Badge } from '../../components/ui/Badge'
 import { useTripWise } from '../../state/useTripWise'
 import { formatCurrency } from '../../lib/formatters'
+import { downloadVisaApplicationPass } from '../../lib/pdfCertificates'
 
 interface VisaCountry {
   country: string
@@ -424,8 +425,26 @@ export function VisaAssistancePage() {
                   <p className="text-emerald-950 font-bold">Embassy Tracking Status:</p>
                   <p className="text-emerald-800 font-medium">Document Verification in Progress. Expected approved e-Visa on or before <strong>{selectedCountry.guaranteedDelivery}</strong>.</p>
                 </div>
-                <Button className="w-full rounded-full" onClick={() => setSelectedCountry(null)}>
-                  Done & Track Status
+                <Button
+                  className="w-full rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
+                  onClick={() => {
+                    if (selectedCountry) {
+                      downloadVisaApplicationPass({
+                        applicationRef: 'GT-VISA-94821',
+                        applicantName: 'Aarav Mehta',
+                        passportNumber: 'Z4892714',
+                        destinationCountry: selectedCountry.country,
+                        visaType: selectedCountry.type,
+                        validity: selectedCountry.validity,
+                        guaranteedDelivery: selectedCountry.guaranteedDelivery,
+                        submissionDate: new Date().toLocaleDateString('en-GB'),
+                      })
+                      notify('📥 Official e-Visa Confirmation Summary PDF downloaded!')
+                    }
+                    setSelectedCountry(null)
+                  }}
+                >
+                  Done & Download e-Visa Summary (PDF)
                 </Button>
               </div>
             )}

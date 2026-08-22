@@ -4,6 +4,7 @@ import { Card } from '../../components/ui/Card'
 import { Button } from '../../components/ui/Button'
 import { useTripWise } from '../../state/useTripWise'
 import { formatCurrency } from '../../lib/formatters'
+import { downloadInsuranceCertificate } from '../../lib/pdfCertificates'
 
 interface CurrencyRate {
   code: string
@@ -676,8 +677,28 @@ export function ForexAndInsurancePage() {
                   <p className="text-emerald-950 font-bold">Embassy Visa Compliance Certificate Ready:</p>
                   <p className="text-emerald-800">Valid for {destCountry} visa application. Cashless claims helpline: <strong>1800-266-7780 (Toll Free)</strong>.</p>
                 </div>
-                <Button className="w-full rounded-full" onClick={() => setActivePolicy(null)}>
-                  Done & Download Certificate (PDF)
+                <Button
+                  className="w-full rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
+                  onClick={() => {
+                    if (activePolicy) {
+                      downloadInsuranceCertificate({
+                        policyNumber: 'TAT-TRV-2026-89412',
+                        travelerName: 'Aarav Mehta',
+                        passportNumber: 'Z4892714',
+                        destination: destCountry,
+                        startDate,
+                        endDate,
+                        planTitle: activePolicy.title,
+                        coverageAmount: activePolicy.coverAmount,
+                        premiumPaid: activePolicy.netPrice * numTravellers,
+                        partner: activePolicy.partner,
+                      })
+                      notify('📥 Official Embassy Insurance PDF Certificate downloaded!')
+                    }
+                    setActivePolicy(null)
+                  }}
+                >
+                  Done & Download Official PDF Certificate
                 </Button>
               </div>
             )}
