@@ -1,4 +1,4 @@
-import { Bell, CheckSquare, Compass, Globe, LayoutDashboard, Map, Menu, Plane, Plus, Search, Settings, Shield, Sparkles, UserCircle, WalletCards } from 'lucide-react'
+import { BarChart3, Bell, CheckSquare, Compass, Globe, LayoutDashboard, Map, Menu, Plane, Plus, Search, Settings, Shield, Sparkles, UserCircle, WalletCards } from 'lucide-react'
 import { useState, type FormEvent, type ReactNode } from 'react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { useTripWise } from '../../state/useTripWise'
@@ -11,6 +11,7 @@ const primaryNavigation = [
   { label: 'My Trips', to: '/trips', icon: Map },
   { label: 'AI Planner', to: '/recommendations', icon: Sparkles, badge: 'LLaMA' },
   { label: 'Bookings', to: '/booking', icon: Plane, badge: 'Live' },
+  { label: 'Analytics', to: '/analytics', icon: BarChart3 },
   { label: 'Discover', to: '/discover/cities', icon: Compass },
   { label: 'Budget & Split', to: '/trips/trip-konkan/budget', icon: WalletCards },
   { label: 'Safety & Lingo', to: '/safety', icon: Shield },

@@ -1,4 +1,4 @@
-import { ArrowLeft, ArrowRight, CalendarPlus, MapPin, Plus, Save, Share2, Sparkles, X } from 'lucide-react'
+import { ArrowLeft, ArrowRight, CalendarPlus, History, Kanban, LayoutList, MapPin, Plus, Save, Share2, Sparkles, Users, X } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useTripData } from '../../hooks/useTripSelectors'
@@ -9,6 +9,9 @@ import { Button } from '../../components/ui/Button'
 import { Card, SectionHeading } from '../../components/ui/Card'
 import { ConfirmDialog } from '../../components/ui/Feedback'
 import { DayAccordion, BuilderDetailPanel } from './ItineraryComponents'
+import { ItineraryKanbanView } from './ItineraryKanbanView'
+import { TripMembersRbacModal } from '../trips/TripMembersRbacModal'
+import { TripAuditLogDrawer } from '../../components/audit/TripAuditLogDrawer'
 import { TripMapView } from '../../components/map/TripMapView'
 import type { ActivityCategory } from '../../types/domain'
 
@@ -16,9 +19,12 @@ export function ItineraryBuilderPage() {
   const { tripId } = useParams()
   const { state, dispatch, notify } = useTripWise()
   const data = useTripData(tripId)
+  const [viewMode, setViewMode] = useState<'timeline' | 'kanban'>('timeline')
   const [openDays, setOpenDays] = useState<Record<string, boolean>>({})
   const [deleteStopId, setDeleteStopId] = useState<string | null>(null)
   const [addStopOpen, setAddStopOpen] = useState(false)
+  const [rbacModalOpen, setRbacModalOpen] = useState(false)
+  const [auditDrawerOpen, setAuditDrawerOpen] = useState(false)
   const [selectedCityToAdd, setSelectedCityToAdd] = useState(state.db.cities[0]?.id || '')
   const [optimizing, setOptimizing] = useState(false)
   
@@ -153,12 +159,18 @@ export function ItineraryBuilderPage() {
     <div className="space-y-7">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <Link to="/trips" className="inline-flex items-center gap-2 text-sm font-semibold text-ink/55 hover:text-ink"><ArrowLeft size={16} />Back to my trips</Link>
-        <div className="flex items-center gap-2">
-          <Button variant="secondary" size="sm" icon={<Share2 size={15} />} onClick={() => {
+        <div className="flex flex-wrap items-center gap-2">
+          <Button variant="secondary" size="sm" icon={<Users size={14} className="text-[#4F46E5]" />} onClick={() => setRbacModalOpen(true)}>
+            Crew Roles
+          </Button>
+          <Button variant="secondary" size="sm" icon={<History size={14} />} onClick={() => setAuditDrawerOpen(true)}>
+            Audit Log
+          </Button>
+          <Button variant="secondary" size="sm" icon={<Share2 size={14} />} onClick={() => {
             navigator.clipboard?.writeText(`${window.location.origin}/shared/konkan-express`)
             notify('Share link copied to clipboard!')
           }}>Share</Button>
-          <Button size="sm" icon={<Save size={15} />} onClick={() => notify('All changes are saved in real-time.')}>Saved Live</Button>
+          <Button size="sm" icon={<Save size={14} />} onClick={() => notify('All changes are saved in real-time.')}>Saved Live</Button>
         </div>
       </div>
 
@@ -167,7 +179,27 @@ export function ItineraryBuilderPage() {
         title={tripData.trip.name}
         description={`${formatDateRange(tripData.trip.startDate, tripData.trip.endDate)} · Build a complete, constraint-aware travel route.`}
         action={
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex p-1 bg-slate-100 rounded-xl border border-slate-200">
+              <button
+                type="button"
+                onClick={() => setViewMode('timeline')}
+                className={`px-3 py-1 text-xs font-bold rounded-lg flex items-center gap-1.5 transition-all ${
+                  viewMode === 'timeline' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                <LayoutList size={13} /> Timeline
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode('kanban')}
+                className={`px-3 py-1 text-xs font-bold rounded-lg flex items-center gap-1.5 transition-all ${
+                  viewMode === 'kanban' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                <Kanban size={13} /> Kanban Board
+              </button>
+            </div>
             <Badge tone="sage">{tripData.stops.length} cities</Badge>
             <Badge tone="clay">{tripData.activities.length} anchors</Badge>
           </div>
@@ -177,67 +209,76 @@ export function ItineraryBuilderPage() {
       {/* Interactive Map Visual */}
       <TripMapView stops={tripData.stops} cities={state.db.cities} height="280px" />
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(20rem,0.75fr)]">
-        <Card padding="none" className="overflow-hidden">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-5 py-4 sm:px-6">
-            <div>
-              <p className="eyebrow">Day by day Schedule</p>
-              <p className="mt-1 text-sm text-ink/55">Click any day to expand activities or add custom items.</p>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <Button
-                variant="secondary"
-                size="sm"
-                icon={<Sparkles size={14} className="text-[#4F46E5]" />}
-                onClick={handleAutoOptimize}
-                disabled={optimizing}
-              >
-                {optimizing ? 'Optimizing...' : '⚡ Auto-Optimize'}
-              </Button>
-              <Button variant="soft" size="sm" icon={<Plus size={14} />} onClick={() => setAddStopOpen(true)}>Add stop</Button>
-              <Button variant="secondary" size="sm" icon={<CalendarPlus size={14} />} onClick={() => setAddActivityOpen(true)}>+ Custom Activity</Button>
-            </div>
-          </div>
-
-          <div className="px-5 sm:px-6">
-            {dayRows.map((day) => (
-              <DayAccordion
-                key={day.date}
-                date={day.date}
-                city={day.city}
-                stop={day.stop}
-                activities={day.activities}
-                open={openDays[day.date] ?? day.date === tripData.trip.startDate}
-                onToggle={() => {
-                  setOpenDays((current) => ({ ...current, [day.date]: !(current[day.date] ?? day.date === tripData.trip.startDate) }))
-                  dispatch({ type: 'SET_SELECTED_DAY', dayId: day.date })
-                }}
-                onSelectActivity={(id) => dispatch({ type: 'SET_SELECTED_ACTIVITY', activityId: id })}
-                selectedActivityId={selectedActivityId}
-                onUpdateStop={(changes) => day.stop && dispatch({ type: 'UPDATE_STOP', stopId: day.stop.id, changes })}
-                onRemoveStop={() => day.stop && setDeleteStopId(day.stop.id)}
-                onRemoveActivity={(id) => {
-                  dispatch({ type: 'REMOVE_TRIP_ACTIVITY', activityId: id })
-                  notify('Activity removed.')
-                }}
-                onMoveActivity={moveActivity}
-              />
-            ))}
-          </div>
-
-          <div className="flex items-center justify-between gap-3 border-t border-line px-5 py-4 text-xs text-ink/50 sm:px-6">
-            <span className="flex items-center gap-1.5"><MapPin size={14} className="text-clay" />All stops and activities sync with budget & calendar.</span>
-            <Link to={`/trips/${tripData.trip.id}/itinerary`} className="inline-flex items-center gap-1 font-semibold text-ink hover:text-clay">Preview read-only view <ArrowRight size={14} /></Link>
-          </div>
-        </Card>
-
-        <BuilderDetailPanel
-          city={selectedCity}
-          selectedActivity={selectedActivity}
-          selectedTripActivity={selectedTripActivity}
-          onUpdateActivity={(changes) => selectedActivityId && dispatch({ type: 'UPDATE_TRIP_ACTIVITY', activityId: selectedActivityId, changes })}
+      {viewMode === 'kanban' ? (
+        <ItineraryKanbanView
+          activities={tripData.activities}
+          allActivities={state.db.activities}
+          stops={tripData.stops}
+          cities={state.db.cities}
         />
-      </div>
+      ) : (
+        <div className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(20rem,0.75fr)]">
+          <Card padding="none" className="overflow-hidden">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-5 py-4 sm:px-6">
+              <div>
+                <p className="eyebrow">Day by day Schedule</p>
+                <p className="mt-1 text-sm text-ink/55">Click any day to expand activities or add custom items.</p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  icon={<Sparkles size={14} className="text-[#4F46E5]" />}
+                  onClick={handleAutoOptimize}
+                  disabled={optimizing}
+                >
+                  {optimizing ? 'Optimizing...' : '⚡ Auto-Optimize'}
+                </Button>
+                <Button variant="soft" size="sm" icon={<Plus size={14} />} onClick={() => setAddStopOpen(true)}>Add stop</Button>
+                <Button variant="secondary" size="sm" icon={<CalendarPlus size={14} />} onClick={() => setAddActivityOpen(true)}>+ Custom Activity</Button>
+              </div>
+            </div>
+
+            <div className="px-5 sm:px-6">
+              {dayRows.map((day) => (
+                <DayAccordion
+                  key={day.date}
+                  date={day.date}
+                  city={day.city}
+                  stop={day.stop}
+                  activities={day.activities}
+                  open={openDays[day.date] ?? day.date === tripData.trip.startDate}
+                  onToggle={() => {
+                    setOpenDays((current) => ({ ...current, [day.date]: !(current[day.date] ?? day.date === tripData.trip.startDate) }))
+                    dispatch({ type: 'SET_SELECTED_DAY', dayId: day.date })
+                  }}
+                  onSelectActivity={(id) => dispatch({ type: 'SET_SELECTED_ACTIVITY', activityId: id })}
+                  selectedActivityId={selectedActivityId}
+                  onUpdateStop={(changes) => day.stop && dispatch({ type: 'UPDATE_STOP', stopId: day.stop.id, changes })}
+                  onRemoveStop={() => day.stop && setDeleteStopId(day.stop.id)}
+                  onRemoveActivity={(id) => {
+                    dispatch({ type: 'REMOVE_TRIP_ACTIVITY', activityId: id })
+                    notify('Activity removed.')
+                  }}
+                  onMoveActivity={moveActivity}
+                />
+              ))}
+            </div>
+
+            <div className="flex items-center justify-between gap-3 border-t border-line px-5 py-4 text-xs text-ink/50 sm:px-6">
+              <span className="flex items-center gap-1.5"><MapPin size={14} className="text-clay" />All stops and activities sync with budget & calendar.</span>
+              <Link to={`/trips/${tripData.trip.id}/itinerary`} className="inline-flex items-center gap-1 font-semibold text-ink hover:text-clay">Preview read-only view <ArrowRight size={14} /></Link>
+            </div>
+          </Card>
+
+          <BuilderDetailPanel
+            city={selectedCity}
+            selectedActivity={selectedActivity}
+            selectedTripActivity={selectedTripActivity}
+            onUpdateActivity={(changes) => selectedActivityId && dispatch({ type: 'UPDATE_TRIP_ACTIVITY', activityId: selectedActivityId, changes })}
+          />
+        </div>
+      )}
 
       {/* Add Stop Modal Dialog */}
       {addStopOpen && (
@@ -364,6 +405,19 @@ export function ItineraryBuilderPage() {
         confirmLabel="Remove stop"
         onClose={() => setDeleteStopId(null)}
         onConfirm={removeStop}
+      />
+
+      {/* RBAC Member & Roles Modal */}
+      <TripMembersRbacModal
+        open={rbacModalOpen}
+        onClose={() => setRbacModalOpen(false)}
+        tripName={tripData.trip.name}
+      />
+
+      {/* Audit Log Drawer */}
+      <TripAuditLogDrawer
+        open={auditDrawerOpen}
+        onClose={() => setAuditDrawerOpen(false)}
       />
     </div>
   )

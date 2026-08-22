@@ -19,6 +19,7 @@ import { ProfilePage, SettingsPage } from '../features/profile/ProfilePages'
 import { SmartRecommendationPage } from '../features/ai/SmartRecommendationPage'
 import { SmartPackingPage } from '../features/tools/SmartPackingPage'
 import { SafetyAndLanguagePage } from '../features/tools/SafetyAndLanguagePage'
+import { AnalyticsReportsPage } from '../features/analytics/AnalyticsReportsPage'
 import { BookingPage } from '../features/booking/BookingPage'
 import { Card } from '../components/ui/Card'
 import { Button } from '../components/ui/Button'
@@ -76,6 +77,8 @@ function AppRoutes() {
           <Route path="/plan" element={<SmartRecommendationPage />} />
           <Route path="/booking" element={<BookingPage />} />
           <Route path="/safety" element={<SafetyAndLanguagePage />} />
+          <Route path="/analytics" element={<AnalyticsReportsPage />} />
+          <Route path="/reports" element={<AnalyticsReportsPage />} />
           <Route path="/packing" element={<SmartPackingPage />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/settings" element={<SettingsPage />} />
