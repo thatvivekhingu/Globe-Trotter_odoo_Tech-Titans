@@ -63,15 +63,11 @@ function SidebarLink({ label, to, icon: Icon, badge }: { label: string; to: stri
   )
 }
 
-function TopBar({ onMenu }: { onMenu: () => void }) {
+import { CommandPaletteModal } from './CommandPaletteModal'
+
+function TopBar({ onMenu, onOpenCommandPalette }: { onMenu: () => void; onOpenCommandPalette: () => void }) {
   const navigate = useNavigate()
   const { currentUser } = useTripWise()
-  const [query, setQuery] = useState('')
-
-  function handleSearch(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    navigate(`/discover/cities${query.trim() ? `?q=${encodeURIComponent(query.trim())}` : ''}`)
-  }
 
   return (
     <header className="sticky top-0 z-30 border-b border-slate-200/80 bg-white/85 backdrop-blur-md">
@@ -90,21 +86,20 @@ function TopBar({ onMenu }: { onMenu: () => void }) {
           </NavLink>
         </div>
 
-        {/* Global Search Bar */}
-        <form onSubmit={handleSearch} className="hidden max-w-md flex-1 md:block">
-          <label className="group flex h-10 items-center gap-2.5 rounded-full border border-slate-200 bg-slate-50/80 px-4 text-xs text-slate-500 focus-within:border-slate-800 focus-within:bg-white focus-within:ring-2 focus-within:ring-slate-800/10 transition-all">
-            <Search size={15} className="text-slate-400 group-focus-within:text-slate-800" />
-            <input
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              className="min-w-0 flex-1 bg-transparent text-xs text-slate-900 outline-none placeholder:text-slate-400"
-              placeholder="Search destinations, beaches, activities..."
-            />
-            <kbd className="hidden rounded-md border border-slate-200 bg-white px-1.5 py-0.5 text-[10px] font-semibold text-slate-400 lg:inline shadow-2xs">
-              ⌘ K
-            </kbd>
-          </label>
-        </form>
+        {/* Global Spotlight Search Trigger */}
+        <button
+          type="button"
+          onClick={onOpenCommandPalette}
+          className="hidden max-w-md flex-1 md:flex items-center justify-between h-10 rounded-full border border-slate-200 bg-slate-50/80 px-4 text-xs text-slate-500 hover:border-slate-400 hover:bg-white transition-all text-left cursor-pointer"
+        >
+          <div className="flex items-center gap-2.5">
+            <Search size={15} className="text-slate-400" />
+            <span className="text-slate-400">Search destinations, flights, forex, visa, packing...</span>
+          </div>
+          <kbd className="hidden rounded-md border border-slate-200 bg-white px-2 py-0.5 text-[10px] font-bold text-slate-600 lg:inline shadow-2xs">
+            ⌘ K
+          </kbd>
+        </button>
 
         {/* Right Nav Actions */}
         <div className="flex items-center gap-3">
@@ -265,11 +260,23 @@ function MobileDrawer({ open, onClose }: { open: boolean; onClose: () => void })
 
 export function AppShell({ children }: { children: ReactNode }) {
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const [commandPaletteOpen, setCommandPaletteOpen] = useState(false)
   const location = useLocation()
+
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault()
+        setCommandPaletteOpen((prev) => !prev)
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [])
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-slate-900 relative antialiased selection:bg-[#B4F056] selection:text-[#0F172A]">
-      <TopBar onMenu={() => setDrawerOpen(true)} />
+      <TopBar onMenu={() => setDrawerOpen(true)} onOpenCommandPalette={() => setCommandPaletteOpen(true)} />
       <Sidebar />
       <MobileDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
       <main key={location.pathname} className="min-w-0 pb-24 lg:ml-60 lg:pb-12">
@@ -279,6 +286,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       </main>
       <MobileTabBar />
       <GlobeGuideChat />
+      <CommandPaletteModal isOpen={commandPaletteOpen} onClose={() => setCommandPaletteOpen(false)} />
     </div>
   )
 }
