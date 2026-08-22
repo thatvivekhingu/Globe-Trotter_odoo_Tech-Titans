@@ -166,3 +166,18 @@ def test_stop_reorder_persists_for_owner(client):
     })
     assert response.status_code == 200
     assert [item['id'] for item in response.json()] == [second['id'], first['id']]
+
+
+def test_chat_does_not_fabricate_when_provider_is_unavailable(client):
+    response = client.post('/api/v1/ai/chat', json={'message': 'What should I do in Goa?'})
+
+    assert response.status_code == 503
+    assert 'AI provider' in response.json()['detail']
+
+
+def test_ai_status_does_not_expose_provider_secret(client):
+    response = client.get('/api/v1/ai/status')
+
+    assert response.status_code == 200
+    assert response.json()['configured'] is False
+    assert 'api_key' not in response.json()
