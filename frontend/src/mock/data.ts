@@ -708,6 +708,46 @@ export const seedStops: TripStop[] = [
     order: 1,
     notes: 'Khyber Resort Gulmarg & Gondola Phase 2 skiing',
   },
+
+  // Kerala Stops
+  {
+    id: 'stop-kerala-munnar',
+    tripId: 'trip-kerala-mmt',
+    cityId: 'city-munnar',
+    arrivalDate: '2027-01-10',
+    departureDate: '2027-01-13',
+    order: 0,
+    notes: 'Emerald Tea Plantation Bungalow & Spice Mountain Treks',
+  },
+  {
+    id: 'stop-kerala-kochi',
+    tripId: 'trip-kerala-mmt',
+    cityId: 'city-kochi',
+    arrivalDate: '2027-01-13',
+    departureDate: '2027-01-15',
+    order: 1,
+    notes: 'Alleppey Private Luxury Houseboat Cruise & Backwaters',
+  },
+
+  // Rajasthan Stops
+  {
+    id: 'stop-raj-jaipur',
+    tripId: 'trip-rajasthan-mmt',
+    cityId: 'city-jaipur',
+    arrivalDate: '2026-01-15',
+    departureDate: '2026-01-18',
+    order: 0,
+    notes: 'Amber Fort, Hawa Mahal & Johari Bazaar Gems',
+  },
+  {
+    id: 'stop-raj-udaipur',
+    tripId: 'trip-rajasthan-mmt',
+    cityId: 'city-udaipur',
+    arrivalDate: '2026-01-18',
+    departureDate: '2026-01-22',
+    order: 1,
+    notes: 'City Palace Udaipur, Lake Pichola Sunset Boat Cruise & Jagmandir',
+  },
 ]
 
 export const seedTripActivities: TripActivity[] = [
@@ -773,6 +813,58 @@ export const seedTripActivities: TripActivity[] = [
     durationMinutes: 120,
     estimatedCost: 1000,
     order: 0,
+  },
+
+  // Kerala Activities
+  {
+    id: 'ta-ker-1',
+    tripId: 'trip-kerala-mmt',
+    stopId: 'stop-kerala-munnar',
+    activityId: 'act-koc-houseboat',
+    date: '2027-01-11',
+    startTime: '10:00',
+    durationMinutes: 180,
+    estimatedCost: 3500,
+    order: 0,
+    notes: 'Tea Tasting & Eravikulam National Park Safari',
+  },
+  {
+    id: 'ta-ker-2',
+    tripId: 'trip-kerala-mmt',
+    stopId: 'stop-kerala-kochi',
+    activityId: 'act-koc-houseboat',
+    date: '2027-01-14',
+    startTime: '13:00',
+    durationMinutes: 240,
+    estimatedCost: 8500,
+    order: 1,
+    notes: 'Alleppey Backwater Private Houseboat Day Cruise with Chef Feast',
+  },
+
+  // Rajasthan Activities
+  {
+    id: 'ta-raj-1',
+    tripId: 'trip-rajasthan-mmt',
+    stopId: 'stop-raj-jaipur',
+    activityId: 'act-jai-amber',
+    date: '2026-01-16',
+    startTime: '09:00',
+    durationMinutes: 180,
+    estimatedCost: 2800,
+    order: 0,
+    notes: 'Amber Fort Elephant Ramp & Sheesh Mahal Guided Tour',
+  },
+  {
+    id: 'ta-raj-2',
+    tripId: 'trip-rajasthan-mmt',
+    stopId: 'stop-raj-udaipur',
+    activityId: 'act-udr-boat',
+    date: '2026-01-19',
+    startTime: '17:00',
+    durationMinutes: 120,
+    estimatedCost: 4500,
+    order: 1,
+    notes: 'Lake Pichola Royal Sunset Boat Cruise & Jagmandir Island',
   },
 ]
 
@@ -861,6 +953,58 @@ export const seedExpenses: Expense[] = [
     amount: 4800,
     description: 'Gulmarg Gondola Phase 1 & 2 Cable Car Tickets & Ski Pass',
     date: '2026-12-22',
+  },
+
+  // Kerala Expenses
+  {
+    id: 'exp-ker-1',
+    tripId: 'trip-kerala-mmt',
+    category: 'transportation',
+    amount: 11400,
+    description: 'Indigo Flight BLR to COK & Private Innova Chauffeur',
+    date: '2027-01-10',
+  },
+  {
+    id: 'exp-ker-2',
+    tripId: 'trip-kerala-mmt',
+    category: 'accommodation',
+    amount: 32500,
+    description: 'Fragrant Nature Munnar & Alleppey Premium Luxury Houseboat',
+    date: '2027-01-12',
+  },
+  {
+    id: 'exp-ker-3',
+    tripId: 'trip-kerala-mmt',
+    category: 'activities',
+    amount: 6900,
+    description: 'Kathakali cultural show, Spice plantation tour, & Ayurveda spa',
+    date: '2027-01-14',
+  },
+
+  // Rajasthan Expenses
+  {
+    id: 'exp-raj-1',
+    tripId: 'trip-rajasthan-mmt',
+    category: 'transportation',
+    amount: 9800,
+    description: 'Vande Bharat Express Delhi to Jaipur & Intercity Private Cab',
+    date: '2026-01-15',
+  },
+  {
+    id: 'exp-raj-2',
+    tripId: 'trip-rajasthan-mmt',
+    category: 'accommodation',
+    amount: 38500,
+    description: 'Samode Haveli Jaipur & Trident Udaipur Palace View Rooms',
+    date: '2026-01-17',
+  },
+  {
+    id: 'exp-raj-3',
+    tripId: 'trip-rajasthan-mmt',
+    category: 'activities',
+    amount: 9400,
+    description: 'Amber Fort VIP tickets, Lake Pichola royal boat charter & Rajasthani Thalis',
+    date: '2026-01-20',
   },
 ]
 

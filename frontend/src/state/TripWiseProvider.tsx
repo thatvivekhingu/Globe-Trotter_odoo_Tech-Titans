@@ -24,7 +24,8 @@ function createInitialState(): TripWiseState {
         const parsed = JSON.parse(stored) as TripWiseState
         if (parsed?.db?.trips?.length) {
           const hasMmtTrip = parsed.db.trips.some(t => t.id === 'trip-goa-mmt')
-          if (!hasMmtTrip) {
+          const hasStopsForRaj = parsed.db.tripStops?.some(s => s.tripId === 'trip-rajasthan-mmt')
+          if (!hasMmtTrip || !hasStopsForRaj) {
             parsed.db = initialDb
           } else {
             parsed.db.cities = initialDb.cities
