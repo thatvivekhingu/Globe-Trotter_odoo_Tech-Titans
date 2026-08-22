@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
 import { Bot, Mic, MicOff, Minimize2, Send, Sparkles, Volume2, VolumeX } from 'lucide-react'
-import { apiClient, getApiErrorMessage } from '../../lib/api/client'
 
 interface ChatMessage {
   id: string

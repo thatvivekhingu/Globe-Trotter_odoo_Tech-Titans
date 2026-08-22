@@ -9,8 +9,6 @@ import { Field, Select, TextInput } from '../../components/ui/Field'
 import { Badge } from '../../components/ui/Badge'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts'
 import type { ExpenseCategory } from '../../types/domain'
-import { generateRecommendation } from '../../lib/api/travelApi'
-import { getApiErrorMessage } from '../../lib/api/client'
 
 interface RecommendationResult {
   title: string
@@ -211,86 +209,10 @@ Return strict JSON with this exact schema:
         suggestedStops: stopsData,
         budgetDistribution: budgetSplit,
         totalEstimatedCost: numBudget,
->>>>>>> 18d724e (fix(groq-ai): fix official Groq LLaMA 3.3 70B & 3.1 8B model IDs so live AI generation works 100% without mock fallback)
       })
-      const cityDays = new Map<string, number>()
-      response.days.forEach((day) => cityDays.set(day.city, (cityDays.get(day.city) || 0) + 1))
-      const cities = response.suggestedCities.map((name) => ({
-        name,
-        region: response.days.find((day) => day.city === name)?.city || name,
-        days: cityDays.get(name) || 1,
-        reason: response.days.find((day) => day.city === name)?.theme || 'A curated stop in your route.',
-      }))
-      const suggestedStops = [...new Map(response.days.map((day) => [day.city, day])).values()].map((day) => ({
-        cityName: day.city,
-        arrivalDay: day.dayNumber,
-        departureDay: day.dayNumber,
-        activities: day.activities.map((activity) => ({ ...activity, duration: Number.parseInt(activity.duration, 10) || 60 })),
-      }))
-      const budgetDistribution = response.budgetBreakdown as Record<ExpenseCategory, number>
-      setResult({ title: response.tripName, summary: response.summary, cities, suggestedStops, budgetDistribution, totalEstimatedCost: Object.values(budgetDistribution).reduce((total, amount) => total + amount, 0) })
-      notify('Live recommendation generated from the TripWise API.')
-    } catch {
-      // High-Precision in-browser AI Generator Fallback
-      await new Promise((resolve) => setTimeout(resolve, 800))
-      
-      const cityPool = destinationType === 'beaches' 
-        ? ['Goa', 'Andaman & Nicobar Islands'] 
-        : destinationType === 'mountains' 
-        ? ['Manali & Solang', 'Srinagar & Gulmarg'] 
-        : destinationType === 'heritage'
-        ? ['Jaipur', 'Udaipur']
-        : ['Dubai', 'Bali']
-
-      const chosenCity = cityPool[0]
-      const chosenCity2 = cityPool[1] || chosenCity
-
-      const cities = [
-        { name: chosenCity, region: chosenCity, days: Math.ceil(numDays / 2), reason: `Prime ${interest} hotspot with stunning natural views.` },
-        { name: chosenCity2, region: chosenCity2, days: Math.floor(numDays / 2), reason: `Iconic cultural & culinary experience perfectly tailored for ${travelStyle} travel.` }
-      ]
-
-      const suggestedStops = [
-        {
-          cityName: chosenCity,
-          arrivalDay: 1,
-          departureDay: Math.ceil(numDays / 2),
-          activities: [
-            { name: `${chosenCity} Scenic Exploration & Local Sunset`, category: 'sightseeing', cost: 1200, time: '09:30 AM', duration: 180 },
-            { name: `Signature ${interest} Experience & Photography Trail`, category: 'adventure', cost: 2500, time: '02:30 PM', duration: 240 },
-          ]
-        },
-        {
-          cityName: chosenCity2,
-          arrivalDay: Math.ceil(numDays / 2) + 1,
-          departureDay: numDays,
-          activities: [
-            { name: `Authentic Regional Cuisine & Heritage Market Crawl`, category: 'food', cost: 1400, time: '01:00 PM', duration: 150 },
-            { name: `Scenic Golden Hour Sail & Relaxation`, category: 'nature', cost: 1800, time: '05:00 PM', duration: 120 },
-          ]
-        }
-      ]
-
-      const budgetDistribution: Record<ExpenseCategory, number> = {
-        transportation: Math.round(numBudget * 0.28),
-        accommodation: Math.round(numBudget * 0.36),
-        activities: Math.round(numBudget * 0.20),
-        food: Math.round(numBudget * 0.12),
-        other: Math.round(numBudget * 0.04),
-      }
-
-      setResult({
-        title: `${numDays}-Day ${chosenCity} & ${chosenCity2} ${travelStyle.toUpperCase()} Odyssey`,
-        summary: `Expertly curated ${numDays}-day itinerary starting from ${originCity}. Tailored for ${travelStyle} travel with a focus on ${interest} and ${destinationType}. Balanced between iconic landmarks, secret spots, and leisure.`,
-        cities,
-        suggestedStops,
-        budgetDistribution,
-        totalEstimatedCost: Object.values(budgetDistribution).reduce((total, amount) => total + amount, 0),
-      })
-      notify('✨ AI Itinerary generated successfully!')
-    } finally {
+      notify('Smart travel recommendation generated!')
       setLoading(false)
-    }
+    }, 400)
   }
 
   function handleCreateTripFromRecommendation() {

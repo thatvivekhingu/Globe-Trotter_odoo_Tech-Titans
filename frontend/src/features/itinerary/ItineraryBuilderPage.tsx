@@ -1,6 +1,6 @@
 import { ArrowLeft, ArrowRight, CalendarPlus, History, Kanban, LayoutList, MapPin, Plus, Save, Share2, Sparkles, Users, X } from 'lucide-react'
 import { useEffect, useState, type FormEvent } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 import { getApiErrorMessage } from '../../lib/api/client'
 import { copyToClipboard } from '../../lib/clipboard'
 import { formatDateRange, formatShareUrl } from '../../lib/formatters'
@@ -19,7 +19,6 @@ import type { ActivityCategory } from '../../types/domain'
 
 export function ItineraryBuilderPage() {
   const { tripId } = useParams()
-  const navigate = useNavigate()
   const { state, commands, dispatch, notify, remoteError, remoteMode, remoteStatus, refreshTrip } = useTripWise()
   const data = useTripData(tripId)
   const [viewMode, setViewMode] = useState<'timeline' | 'kanban'>('timeline')
@@ -30,7 +29,6 @@ export function ItineraryBuilderPage() {
   const [auditDrawerOpen, setAuditDrawerOpen] = useState(false)
   const [selectedCityToAdd, setSelectedCityToAdd] = useState(state.db.cities[0]?.id || '')
   const [optimizing, setOptimizing] = useState(false)
-  const [mutationPending, setMutationPending] = useState(false)
 
   // Custom Activity Creator Modal State
   const [addActivityOpen, setAddActivityOpen] = useState(false)
@@ -282,6 +280,8 @@ export function ItineraryBuilderPage() {
                     notify('Activity removed.')
                   }}
                   onMoveActivity={moveActivity}
+                  onMoveStopUp={() => {}}
+                  onMoveStopDown={() => {}}
                 />
               ))}
             </div>
