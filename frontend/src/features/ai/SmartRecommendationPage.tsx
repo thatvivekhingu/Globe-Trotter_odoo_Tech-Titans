@@ -73,16 +73,9 @@ export function SmartRecommendationPage() {
     navigate(`/trips/${tripId}/itinerary`)
   }
 
-  return <div className="mx-auto max-w-5xl space-y-8">
-    <SectionHeading eyebrow="Live travel intelligence" title="Build your next trip" description="Generate a grounded itinerary from the TripWise catalogue, shaped around your time, budget, and travel style." />
-    <Card><form onSubmit={handleSubmit} className="space-y-6">
-      <div className="grid gap-5 sm:grid-cols-3">
-        <Field label="Starting city" htmlFor="origin-city"><div className="relative"><MapPin size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink/35" /><TextInput id="origin-city" value={originCity} onChange={(event) => setOriginCity(event.target.value)} className="pl-10" required /></div></Field>
-        <Field label="Days" htmlFor="trip-days"><div className="relative"><Calendar size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink/35" /><TextInput id="trip-days" type="number" min="1" max="30" value={days} onChange={(event) => setDays(event.target.value)} className="pl-10" required /></div></Field>
-        <Field label="Budget (INR)" htmlFor="trip-budget"><div className="relative"><DollarSign size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink/35" /><TextInput id="trip-budget" type="number" min="1000" step="1000" value={budget} onChange={(event) => setBudget(event.target.value)} className="pl-10" required /></div></Field>
-      </div>
-<<<<<<< HEAD
-
+  return (
+    <div className="mx-auto max-w-5xl space-y-8">
+      <SectionHeading eyebrow="Live travel intelligence" title="Build your next trip" description="Generate a grounded itinerary from the TripWise catalogue, shaped around your time, budget, and travel style." />
       {/* One-Tap Quick Prompt Pills */}
       <div className="space-y-2">
         <p className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
@@ -335,11 +328,4 @@ export function SmartRecommendationPage() {
       )}
     </div>
   )
-=======
-      <div className="grid gap-5 sm:grid-cols-3"><Field htmlFor="travel-style" label="Travel style"><Select id="travel-style" value={travelStyle} onChange={(event) => setTravelStyle(event.target.value)} options={[{ value: 'balanced', label: 'Balanced' }, { value: 'budget', label: 'Budget smart' }, { value: 'luxury', label: 'Comfort first' }]} /></Field><Field htmlFor="interest" label="Interest"><Select id="interest" value={interest} onChange={(event) => setInterest(event.target.value)} options={[{ value: 'adventure', label: 'Adventure' }, { value: 'food', label: 'Food' }, { value: 'heritage', label: 'Heritage' }, { value: 'nature', label: 'Nature' }]} /></Field><Field htmlFor="destination-type" label="Destination type"><Select id="destination-type" value={destinationType} onChange={(event) => setDestinationType(event.target.value)} options={[{ value: 'mountains', label: 'Mountains' }, { value: 'coastal', label: 'Coastal' }, { value: 'heritage', label: 'Heritage' }, { value: 'nature', label: 'Nature' }]} /></Field></div>
-      <Button type="submit" icon={<Sparkles size={16} />} disabled={loading}>{loading ? 'Generating from live catalogue...' : 'Generate itinerary'}</Button>
-    </form></Card>
-    {result ? <Card className="space-y-6"><div><p className="eyebrow">API-grounded plan</p><h2 className="mt-2 font-display text-3xl text-ink">{result.title}</h2><p className="body-copy mt-2">{result.summary}</p></div><div className="grid gap-3 sm:grid-cols-3">{result.cities.map((city) => <div key={city.name} className="rounded-xl border border-line bg-white p-4"><p className="font-semibold text-ink">{city.name}</p><p className="mt-1 text-xs text-ink/55">{city.days} day{city.days === 1 ? '' : 's'} · {city.reason}</p></div>)}</div><div className="flex flex-wrap gap-3">{Object.entries(result.budgetDistribution).map(([category, amount]) => <span key={category} className="rounded-full bg-parchment px-3 py-1.5 text-xs font-semibold text-ink/70">{category}: {formatCurrency(amount)}</span>)}</div>{result.proTips.length ? <div><p className="font-semibold text-ink">Travel notes</p><ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-ink/65">{result.proTips.map((tip) => <li key={tip}>{tip}</li>)}</ul></div> : null}<Button onClick={createTrip}>Add to my itinerary</Button></Card> : null}
-  </div>
->>>>>>> 6ba8a5d (fix: stabilize merged AI and itinerary flows)
 }

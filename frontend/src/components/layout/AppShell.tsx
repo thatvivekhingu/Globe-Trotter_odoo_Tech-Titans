@@ -1,11 +1,6 @@
 import { BarChart3, Bell, Building2, CheckSquare, Compass, CreditCard, DollarSign, Flame, Globe, LayoutDashboard, Map, Menu, Plane, Plus, Search, Settings, Shield, Sparkles, UserCircle, WalletCards } from 'lucide-react'
-<<<<<<< HEAD
-import { useState, useEffect, type ReactNode } from 'react'
-import { NavLink, useLocation } from 'react-router-dom'
-=======
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
->>>>>>> 6ba8a5d (fix: stabilize merged AI and itinerary flows)
 import { useTripWise } from '../../state/useTripWise'
 import { AiCopilotFloatingChat } from '../ai/AiCopilotFloatingChat'
 import { CommandPaletteModal } from '../navigation/CommandPaletteModal'
@@ -70,14 +65,8 @@ function SidebarLink({ label, to, icon: Icon, badge }: { label: string; to: stri
   )
 }
 
-<<<<<<< HEAD
-function TopBar({ onMenu, onOpenCommandPalette }: { onMenu: () => void; onOpenCommandPalette: () => void }) {
-=======
-import { CommandPaletteModal } from './CommandPaletteModal'
-
-function TopBar({ onMenu }: { onMenu: () => void }) {
+function TopBar({ onMenu, onOpenCommandPalette }: { onMenu: () => void; onOpenCommandPalette?: () => void }) {
   const navigate = useNavigate()
->>>>>>> 6ba8a5d (fix: stabilize merged AI and itinerary flows)
   const { currentUser } = useTripWise()
   const [query, setQuery] = useState('')
 
