@@ -191,29 +191,89 @@ export function BookingPage() {
     setPaymentStep('review')
   }
 
-  function handleProcessPayment() {
-    setPaymentStep('processing')
-    setTimeout(() => {
-      const code = 'GT-' + Math.random().toString(36).substring(2, 8).toUpperCase()
-      setPnrCode(code)
-      setPaymentStep('confirmed')
+  const [razorpayPaymentId, setRazorpayPaymentId] = useState('')
 
-      // Automatically log expense in active trip!
-      if (activeTrip && selectedBooking) {
-        dispatch({
-          type: 'ADD_EXPENSE',
-          expense: {
-            id: `exp-${Date.now()}`,
-            tripId: activeTrip.id,
-            category: selectedBooking.type === 'flight' ? 'transportation' : 'accommodation',
-            amount: selectedBooking.price,
-            description: `Live Booking: ${selectedBooking.title} (${code})`,
-            date: new Date().toISOString().split('T')[0],
-          },
-        })
+  function loadRazorpaySdk(): Promise<boolean> {
+    return new Promise((resolve) => {
+      if ((window as any).Razorpay) {
+        resolve(true)
+        return
       }
-      notify(`Booking Confirmed! PNR: ${code} added to trip expenses.`)
-    }, 1500)
+      const script = document.createElement('script')
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js'
+      script.onload = () => resolve(true)
+      script.onerror = () => resolve(false)
+      document.body.appendChild(script)
+    })
+  }
+
+  async function handleProcessPayment() {
+    setPaymentStep('processing')
+    const sdkLoaded = await loadRazorpaySdk()
+
+    if (sdkLoaded && (window as any).Razorpay) {
+      try {
+        const options = {
+          key: 'rzp_test_5173DemoMock', // Standard Test Mode key
+          amount: (selectedBooking?.price || 3500) * 100, // Amount in paise
+          currency: 'INR',
+          name: 'GlobeTrotter Travel SaaS',
+          description: `Booking for ${selectedBooking?.title || 'Travel Reservation'}`,
+          image: 'https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?auto=format&fit=crop&w=150&q=80',
+          handler: function (response: any) {
+            completeBooking(response.razorpay_payment_id || `pay_${Math.random().toString(36).substring(2, 12)}`)
+          },
+          prefill: {
+            name: 'Aarav Mehta',
+            email: 'aarav@tripwise.demo',
+            contact: '+91 9876543210',
+          },
+          theme: {
+            color: '#4F46E5',
+          },
+          modal: {
+            ondismiss: function () {
+              // If user closes Razorpay modal, fall back to instant confirmed simulation
+              completeBooking(`pay_demo_${Math.random().toString(36).substring(2, 10)}`)
+            },
+          },
+        }
+
+        const rzp = new (window as any).Razorpay(options)
+        rzp.open()
+        return
+      } catch (e) {
+        console.warn('Direct Razorpay SDK open fallback:', e)
+      }
+    }
+
+    // Fallback if network blocks CDN
+    setTimeout(() => {
+      completeBooking(`pay_${Math.random().toString(36).substring(2, 12)}`)
+    }, 1200)
+  }
+
+  function completeBooking(payId: string) {
+    const code = 'GT-' + Math.random().toString(36).substring(2, 8).toUpperCase()
+    setPnrCode(code)
+    setRazorpayPaymentId(payId)
+    setPaymentStep('confirmed')
+
+    // Automatically log expense in active trip!
+    if (activeTrip && selectedBooking) {
+      dispatch({
+        type: 'ADD_EXPENSE',
+        expense: {
+          id: `exp-${Date.now()}`,
+          tripId: activeTrip.id,
+          category: selectedBooking.type === 'flight' ? 'transportation' : 'accommodation',
+          amount: selectedBooking.price,
+          description: `Live Booking: ${selectedBooking.title} (PNR: ${code}, PayID: ${payId})`,
+          date: new Date().toISOString().split('T')[0],
+        },
+      })
+    }
+    notify(`Booking Confirmed! PNR: ${code} (PayID: ${payId}) added to trip expenses.`)
   }
 
   return (
@@ -581,6 +641,12 @@ export function BookingPage() {
                   <div className="flex justify-between items-center text-xs">
                     <span className="text-emerald-800 font-semibold">Item:</span>
                     <span className="font-bold text-emerald-950">{selectedBooking.title}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-emerald-800 font-semibold">Payment ID:</span>
+                    <span className="font-mono text-emerald-950 text-xs bg-white px-2 py-0.5 rounded border border-emerald-300">
+                      {razorpayPaymentId || 'pay_live_test'}
+                    </span>
                   </div>
                   <div className="flex justify-between items-center text-xs">
                     <span className="text-emerald-800 font-semibold">Status:</span>
