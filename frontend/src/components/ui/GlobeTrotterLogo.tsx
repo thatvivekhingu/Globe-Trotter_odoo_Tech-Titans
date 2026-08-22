@@ -80,7 +80,7 @@ export function GlobeTrotterLogo({
   size = 38,
   showText = true,
   showBadge = true,
-  dark = false,
+  dark = true,
 }: LogoProps) {
   return (
     <div className={`inline-flex items-center gap-2.5 group select-none ${className}`}>
@@ -89,10 +89,10 @@ export function GlobeTrotterLogo({
       {showText && (
         <div className="flex items-center gap-1.5">
           <span className={`font-display text-xl font-extrabold tracking-tight leading-none ${dark ? 'text-white' : 'text-slate-900'}`}>
-            Globe<span className="bg-gradient-to-r from-[#818CF8] via-[#A78BFA] to-[#38BDF8] bg-clip-text text-transparent">Trotter</span>
+            Globe<span className="bg-linear-to-r from-[#818CF8] via-[#A78BFA] to-[#38BDF8] bg-clip-text text-transparent">Trotter</span>
           </span>
           {showBadge && (
-            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-gradient-to-r from-indigo-500 via-purple-500 to-emerald-500 text-slate-950 font-black text-[9px] uppercase tracking-wider shadow-xs">
+            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-linear-to-r from-[#4F46E5] via-purple-500 to-[#10B981] text-white font-black text-[9px] uppercase tracking-wider shadow-xs">
               PRO
             </span>
           )}

@@ -137,7 +137,7 @@ export function AuthPage({ mode }: { mode: 'login' | 'signup' }) {
       {/* Top Header */}
       <header className="mx-auto flex w-full max-w-7xl items-center justify-between px-4 py-5 sm:px-6 lg:px-8 border-b border-slate-800/80">
         <Link to="/" className="group">
-          <GlobeTrotterLogo size={42} />
+          <GlobeTrotterLogo size={42} dark={true} />
         </Link>
 
         <div className="flex items-center gap-3">

@@ -215,10 +215,10 @@ function MobileDrawer({ open, onClose }: { open: boolean; onClose: () => void })
   if (!open) return null
   return (
     <div className="fixed inset-0 z-40 lg:hidden" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose() }}>
-      <div className="absolute inset-y-0 left-0 w-[min(84vw,20rem)] border-r border-slate-200 bg-white p-5 shadow-2xl">
+      <div className="absolute inset-y-0 left-0 w-[min(84vw,20rem)] border-r border-slate-800 bg-[#0B0F19] p-5 shadow-2xl text-white">
         <div className="flex items-center justify-between">
-          <GlobeTrotterLogo size={32} />
-          <IconButton label="Close navigation" size="sm" onClick={onClose}><Menu size={18} /></IconButton>
+          <GlobeTrotterLogo size={32} dark={true} />
+          <IconButton label="Close navigation" size="sm" className="text-slate-300 hover:text-white" onClick={onClose}><Menu size={18} /></IconButton>
         </div>
         <nav className="mt-8 space-y-1.5" aria-label="Mobile menu">
           {primaryNavigation.map((item) => (
