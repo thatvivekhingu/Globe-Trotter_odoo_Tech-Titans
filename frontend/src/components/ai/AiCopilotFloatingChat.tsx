@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { Bot, Mic, MicOff, Minimize2, Send, Sparkles, Volume2, VolumeX } from 'lucide-react'
+import { apiClient, getApiErrorMessage } from '../../lib/api/client'
 
 interface ChatMessage {
   id: string
@@ -87,71 +88,14 @@ export function AiCopilotFloatingChat() {
     setInput('')
     setLoading(true)
 
-    const groqKey = localStorage.getItem('GLOBETROTTER_GROQ_KEY') || import.meta.env.VITE_GROQ_API_KEY || ''
-    const selectedModel = localStorage.getItem('GLOBETROTTER_AI_MODEL') || 'openai/gpt-oss-120b'
-
-    if (groqKey && selectedModel !== 'local-engine') {
-      try {
-        const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${groqKey}`,
-          },
-          body: JSON.stringify({
-            model: selectedModel,
-            messages: [
-              {
-                role: 'system',
-                content: 'You are GlobeTrotter AI Copilot, an expert travel planner. Provide helpful, concise, practical travel advice in 2-3 short bullet points.',
-              },
-              { role: 'user', content: query },
-            ],
-          }),
-        })
-        const data = await response.json()
-        const aiText = data?.choices?.[0]?.message?.content
-        if (aiText) {
-          setMessages((prev) => [
-            ...prev,
-            {
-              id: `ai-${Date.now()}`,
-              sender: 'ai',
-              text: aiText,
-              timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            },
-          ])
-          setLoading(false)
-          return
-        }
-      } catch (err) {
-        console.warn('Groq LLaMA API call failed, falling back to smart reply:', err)
-      }
-    }
-
-    // Smart Local Fallback Responses
-    setTimeout(() => {
-      let reply = `That is a wonderful travel question! For ${query.toLowerCase().includes('budget') ? 'saving money' : 'this journey'}, I recommend booking trains 15 days in advance, prioritizing authentic local dhabas/cafes over tourist traps, and packing a reusable water flask.`
-
-      if (query.toLowerCase().includes('goa')) {
-        reply = `🌴 For Goa: \n• South Goa (Palolem, Agonda) is ideal for peaceful sunsets and kayaking.\n• North Goa (Anjuna, Vagator) is great for flea markets and vibrant beach shacks.\n• Don't miss authentic Goan Fish Curry and Bebinca dessert!`
-      } else if (query.toLowerCase().includes('food') || query.toLowerCase().includes('eat')) {
-        reply = `🍲 Culinary Tip:\n• Always explore local morning breakfast spots (e.g. Farsan in Gujarat, Poha in Indore, Masala Dosa in Bengaluru).\n• Average food budget: ₹400 - ₹800 per person per day for authentic local meals.`
-      } else if (query.toLowerCase().includes('pack') || query.toLowerCase().includes('clothes')) {
-        reply = `🎒 Quick Packing Advice:\n• Always carry a 10,000mAh power bank, comfortable walking sneakers, and offline downloaded maps.\n• For hills: Carry 1 thermal layer + windcheater.`
-      }
-
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: `ai-${Date.now()}`,
-          sender: 'ai',
-          text: reply,
-          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        },
-      ])
+    try {
+      const response = await apiClient.post<{ reply: string }>('/ai/chat', { message: query })
+      setMessages((prev) => [...prev, { id: `ai-${Date.now()}`, sender: 'ai', text: response.data.reply, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }])
+    } catch (error) {
+      setMessages((prev) => [...prev, { id: `ai-${Date.now()}`, sender: 'ai', text: getApiErrorMessage(error, 'The copilot is unavailable. Please check that the TripWise API is running.'), timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }])
+    } finally {
       setLoading(false)
-    }, 600)
+    }
   }
 
   return (

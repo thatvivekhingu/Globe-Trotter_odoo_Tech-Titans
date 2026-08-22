@@ -146,7 +146,7 @@ const SAMPLE_HOTELS: HotelItem[] = [
 ]
 
 export function BookingPage() {
-  const { state, dispatch, notify } = useTripWise()
+  const { state, dispatch, notify, currentUser } = useTripWise()
   const [activeTab, setActiveTab] = useState<'flights' | 'hotels'>('flights')
   const [origin, setOrigin] = useState('Mumbai (BOM)')
   const [destination, setDestination] = useState('Goa (GOI)')
@@ -208,13 +208,18 @@ export function BookingPage() {
   }
 
   async function handleProcessPayment() {
+    const razorpayKey = import.meta.env.VITE_RAZORPAY_KEY_ID
+    if (!razorpayKey) {
+      notify('Online payment is not configured. Add VITE_RAZORPAY_KEY_ID and try again.', 'error')
+      return
+    }
     setPaymentStep('processing')
     const sdkLoaded = await loadRazorpaySdk()
 
     if (sdkLoaded && (window as any).Razorpay) {
       try {
         const options = {
-          key: 'rzp_test_5173DemoMock', // Standard Test Mode key
+            key: razorpayKey,
           amount: (selectedBooking?.price || 3500) * 100, // Amount in paise
           currency: 'INR',
           name: 'GlobeTrotter Travel SaaS',
@@ -225,16 +230,15 @@ export function BookingPage() {
           },
           prefill: {
             name: 'Aarav Mehta',
-            email: 'aarav@tripwise.demo',
-            contact: '+91 9876543210',
+            email: currentUser?.email || '',
           },
           theme: {
             color: '#4F46E5',
           },
           modal: {
             ondismiss: function () {
-              // If user closes Razorpay modal, fall back to instant confirmed simulation
-              completeBooking(`pay_demo_${Math.random().toString(36).substring(2, 10)}`)
+              setPaymentStep('review')
+              notify('Payment window closed. Your booking is still pending.', 'info')
             },
           },
         }
@@ -247,10 +251,8 @@ export function BookingPage() {
       }
     }
 
-    // Fallback if network blocks CDN
-    setTimeout(() => {
-      completeBooking(`pay_${Math.random().toString(36).substring(2, 12)}`)
-    }, 1200)
+    setPaymentStep('review')
+    notify('Payment provider could not be loaded. No booking was created.', 'error')
   }
 
   function completeBooking(payId: string) {
