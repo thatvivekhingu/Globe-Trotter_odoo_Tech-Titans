@@ -5,6 +5,7 @@ import { Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recha
 import { useTripData } from '../../hooks/useTripSelectors'
 import { useTripWise } from '../../state/useTripWise'
 import { formatCategoryLabel, formatCurrency, formatDateRange } from '../../lib/formatters'
+import { AiBudgetInsights } from '../../components/ai/AiBudgetInsights'
 import { Badge } from '../../components/ui/Badge'
 import { Button } from '../../components/ui/Button'
 import { Card, MetricCard, SectionHeading } from '../../components/ui/Card'
@@ -27,7 +28,7 @@ export function BudgetPage() {
   const { tripId } = useParams()
   const { state, dispatch, notify } = useTripWise()
   const data = useTripData(tripId)
-  
+
   const [addExpenseOpen, setAddExpenseOpen] = useState(false)
   const [scannerOpen, setScannerOpen] = useState(false)
   const [expDescription, setExpDescription] = useState('')
@@ -188,6 +189,9 @@ export function BudgetPage() {
         </Card>
       </div>
 
+      {/* AI Budget Insights — powered by Gemini */}
+      <AiBudgetInsights tripId={typeof data.trip.id === 'number' ? data.trip.id : 1} />
+
       {/* Logged Expenses List Card */}
       <Card>
         <div className="flex items-center justify-between mb-4">
@@ -223,7 +227,7 @@ export function BudgetPage() {
         </div>
       </Card>
 
-      {/* Group Trip Bill Splitter (Splitwise style) */}
+      {/* Group Trip Bill Splitter */}
       <GroupSplitter />
 
       {/* Add Expense Modal */}

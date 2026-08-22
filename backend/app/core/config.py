@@ -23,7 +23,7 @@ class Settings(BaseSettings):
     groq_api_key: str = ''
     groq_model: str = 'openai/gpt-oss-120b'
     gemini_api_key: str = ''
-    gemini_model: str = 'gemini-1.5-flash'
+    gemini_model: str = 'gemini-3.6-flash'
 
     model_config = SettingsConfigDict(
         env_file='.env',

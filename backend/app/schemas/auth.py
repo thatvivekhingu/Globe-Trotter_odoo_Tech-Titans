@@ -18,8 +18,11 @@ class SignupRequest(BaseModel):
 
 
 class LoginRequest(BaseModel):
-    email: EmailStr
+    user: str | None = None
+    username: str | None = None
+    email: str | None = None
     password: str = Field(min_length=1, max_length=128)
+
 
 
 class TokenResponse(BaseModel):

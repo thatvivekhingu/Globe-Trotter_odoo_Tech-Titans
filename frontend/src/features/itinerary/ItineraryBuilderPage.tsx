@@ -1,13 +1,15 @@
 import { ArrowLeft, ArrowRight, CalendarPlus, History, Kanban, LayoutList, MapPin, Plus, Save, Share2, Sparkles, Users, X } from 'lucide-react'
-import { useState, type FormEvent } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { useEffect, useState, type FormEvent } from 'react'
+import { Link, useNavigate, useParams } from 'react-router-dom'
+import { getApiErrorMessage } from '../../lib/api/client'
+import { copyToClipboard } from '../../lib/clipboard'
+import { formatDateRange, formatShareUrl } from '../../lib/formatters'
 import { useTripData } from '../../hooks/useTripSelectors'
 import { useTripWise } from '../../state/useTripWise'
-import { formatDateRange } from '../../lib/formatters'
 import { Badge } from '../../components/ui/Badge'
 import { Button } from '../../components/ui/Button'
 import { Card, SectionHeading } from '../../components/ui/Card'
-import { ConfirmDialog } from '../../components/ui/Feedback'
+import { ConfirmDialog, ErrorState, Skeleton } from '../../components/ui/Feedback'
 import { DayAccordion, BuilderDetailPanel } from './ItineraryComponents'
 import { ItineraryKanbanView } from './ItineraryKanbanView'
 import { TripMembersRbacModal } from '../trips/TripMembersRbacModal'
@@ -17,7 +19,8 @@ import type { ActivityCategory } from '../../types/domain'
 
 export function ItineraryBuilderPage() {
   const { tripId } = useParams()
-  const { state, dispatch, notify } = useTripWise()
+  const navigate = useNavigate()
+  const { state, commands, dispatch, notify, remoteError, remoteMode, remoteStatus, refreshTrip } = useTripWise()
   const data = useTripData(tripId)
   const [viewMode, setViewMode] = useState<'timeline' | 'kanban'>('timeline')
   const [openDays, setOpenDays] = useState<Record<string, boolean>>({})
@@ -27,7 +30,8 @@ export function ItineraryBuilderPage() {
   const [auditDrawerOpen, setAuditDrawerOpen] = useState(false)
   const [selectedCityToAdd, setSelectedCityToAdd] = useState(state.db.cities[0]?.id || '')
   const [optimizing, setOptimizing] = useState(false)
-  
+  const [mutationPending, setMutationPending] = useState(false)
+
   // Custom Activity Creator Modal State
   const [addActivityOpen, setAddActivityOpen] = useState(false)
   const [actName, setActName] = useState('')
@@ -36,10 +40,19 @@ export function ItineraryBuilderPage() {
   const [actTime, setActTime] = useState('10:00')
   const [actDuration, setActDuration] = useState('120')
   const [actTargetDate, setActTargetDate] = useState('')
-  
+
   const selectedActivityId = state.selectedActivityId
 
-  if (!data) return <Card><p className="text-sm text-ink/60">We could not find that trip.</p></Card>
+  useEffect(() => {
+    if (!tripId || remoteMode !== 'remote' || data) return
+    void refreshTrip(tripId).catch(() => undefined)
+  }, [data, refreshTrip, remoteMode, tripId])
+
+  if (!data) {
+    if (remoteMode === 'remote' && remoteStatus === 'loading') return <div className="space-y-6" aria-busy="true" aria-label="Loading itinerary"><Skeleton className="h-6 w-40" /><Skeleton className="h-16 w-3/4" /><Skeleton className="h-[34rem] w-full" /></div>
+    return <ErrorState title="We could not find that trip" description={remoteError || 'The itinerary is unavailable or you no longer have access to it.'} onRetry={tripId ? () => { void refreshTrip(tripId).catch(() => undefined) } : undefined} />
+  }
+
   const tripData = data
   const dayRows = tripData.days.map((date) => {
     const stop = tripData.stops.find((item) => date >= item.arrivalDate && date <= item.departureDate)
@@ -90,7 +103,18 @@ export function ItineraryBuilderPage() {
     if (!deleteStopId) return
     dispatch({ type: 'REMOVE_STOP', stopId: deleteStopId })
     setDeleteStopId(null)
+    dispatch({ type: 'SET_SELECTED_ACTIVITY', activityId: undefined })
     notify('City stop removed.')
+  }
+
+  async function shareTrip() {
+    try {
+      const shared = await commands.shareTrip(tripData.trip.id)
+      await copyToClipboard(formatShareUrl(window.location.origin, shared.shareToken))
+      notify('Share link copied to your clipboard.')
+    } catch (error) {
+      notify(getApiErrorMessage(error, 'We could not create a share link.'), 'error')
+    }
   }
 
   function handleAddCityStop(e: FormEvent) {
@@ -119,7 +143,7 @@ export function ItineraryBuilderPage() {
     if (!actName.trim()) return
     const targetDate = actTargetDate || tripData.days[0] || tripData.trip.startDate
     const matchingStop = tripData.stops.find((s) => targetDate >= s.arrivalDate && targetDate <= s.departureDate) || tripData.stops[0]
-    
+
     if (!matchingStop) {
       notify('Please add a city stop first.', 'error')
       return
@@ -166,10 +190,7 @@ export function ItineraryBuilderPage() {
           <Button variant="secondary" size="sm" icon={<History size={14} />} onClick={() => setAuditDrawerOpen(true)}>
             Audit Log
           </Button>
-          <Button variant="secondary" size="sm" icon={<Share2 size={14} />} onClick={() => {
-            navigator.clipboard?.writeText(`${window.location.origin}/shared/konkan-express`)
-            notify('Share link copied to clipboard!')
-          }}>Share</Button>
+          <Button variant="secondary" size="sm" icon={<Share2 size={14} />} onClick={() => { void shareTrip() }}>Share</Button>
           <Button size="sm" icon={<Save size={14} />} onClick={() => notify('All changes are saved in real-time.')}>Saved Live</Button>
         </div>
       </div>

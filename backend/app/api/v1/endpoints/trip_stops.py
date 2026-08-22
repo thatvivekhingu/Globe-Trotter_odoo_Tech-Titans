@@ -6,7 +6,7 @@ from app.api.dependencies import get_owned_trip
 from app.db.session import get_db
 from app.models import Trip, TripActivity, TripStop
 from app.schemas.common import ReorderRequest, TripStopCreate, TripStopRead, TripStopUpdate
-from app.services.validation import get_city_or_404, get_stop_for_trip_or_404, next_stop_order, raise_validation, reorder_stops, validate_stop_dates
+from app.services.validation import get_city_or_404, get_stop_for_trip_or_404, next_stop_order, raise_validation, reorder_stops, validate_stop_activity_dates, validate_stop_dates
 
 router = APIRouter()
 
@@ -36,6 +36,7 @@ def update_stop(payload: TripStopUpdate, trip: Trip = Depends(get_owned_trip), s
     departure_date = changes.get('departure_date', stop.departure_date)
     get_city_or_404(db, city_id)
     validate_stop_dates(trip, arrival_date, departure_date)
+    validate_stop_activity_dates(db, stop.id, arrival_date, departure_date)
     if city_id != stop.city_id and db.scalar(select(TripActivity.id).where(TripActivity.trip_stop_id == stop.id)) is not None:
         raise_validation('Move or remove activities before changing a stop city.')
     for key, value in changes.items():

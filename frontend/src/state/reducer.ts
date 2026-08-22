@@ -8,6 +8,13 @@ import type {
   User,
 } from '../types/domain'
 
+export interface TripDetailSnapshot {
+  trip: Trip
+  stops: TripStop[]
+  activities: TripActivity[]
+  expenses: Expense[]
+}
+
 export type TripWiseAction =
   | { type: 'SIGN_IN_DEMO'; userId: string }
   | { type: 'SYNC_AUTH_USER'; user: import('../types/domain').User }
@@ -37,9 +44,32 @@ export type TripWiseAction =
   | { type: 'TOGGLE_SAVED_DESTINATION'; userId: string; cityId: string }
   | { type: 'CREATE_SHARE'; sharedTrip: SharedTrip }
   | { type: 'COPY_SHARED_TRIP'; trip: Trip; stops: TripStop[]; activities: TripActivity[]; expenses: Expense[] }
+  | { type: 'HYDRATE_REMOTE'; trips: Trip[]; cities: TripWiseState['db']['cities']; activities: TripWiseState['db']['activities']; details: TripDetailSnapshot[] }
+  | { type: 'REPLACE_TRIP_DETAIL'; detail: TripDetailSnapshot }
 
 function touchTrip(trips: Trip[], tripId: string) {
   return trips.map((trip) => trip.id === tripId ? { ...trip, updatedAt: new Date().toISOString() } : trip)
+}
+
+function replaceTripDetail(state: TripWiseState, detail: TripDetailSnapshot): TripWiseState {
+  const tripStops = [...state.db.tripStops.filter((stop) => stop.tripId !== detail.trip.id), ...detail.stops]
+  const tripActivities = [...state.db.tripActivities.filter((activity) => activity.tripId !== detail.trip.id), ...detail.activities]
+  const expenses = [...state.db.expenses.filter((expense) => expense.tripId !== detail.trip.id), ...detail.expenses]
+  const hasSelectedTrip = state.selectedTripId === detail.trip.id
+
+  return {
+    ...state,
+    db: {
+      ...state.db,
+      trips: state.db.trips.some((trip) => trip.id === detail.trip.id)
+        ? state.db.trips.map((trip) => trip.id === detail.trip.id ? detail.trip : trip)
+        : [...state.db.trips, detail.trip],
+      tripStops,
+      tripActivities,
+      expenses,
+    },
+    selectedTripId: hasSelectedTrip ? state.selectedTripId : state.selectedTripId,
+  }
 }
 
 export function tripWiseReducer(state: TripWiseState, action: TripWiseAction): TripWiseState {
@@ -74,6 +104,8 @@ export function tripWiseReducer(state: TripWiseState, action: TripWiseAction): T
         ...state,
         db: { ...state.db, trips: [...state.db.trips, action.trip] },
         selectedTripId: action.trip.id,
+        selectedDayId: action.trip.startDate,
+        selectedActivityId: undefined,
       }
     case 'UPDATE_TRIP':
       return {
@@ -119,7 +151,7 @@ export function tripWiseReducer(state: TripWiseState, action: TripWiseAction): T
           ...state.db,
           tripStops: state.db.tripStops.map((stop) => {
             const order = action.orderedStopIds.indexOf(stop.id)
-            return order === -1 ? stop : { ...stop, order }
+            return order === -1 || stop.tripId !== action.tripId ? stop : { ...stop, order }
           }),
         },
       }
@@ -150,7 +182,7 @@ export function tripWiseReducer(state: TripWiseState, action: TripWiseAction): T
           ...state.db,
           tripActivities: state.db.tripActivities.map((activity) => {
             const order = action.orderedActivityIds.indexOf(activity.id)
-            return order === -1 ? activity : { ...activity, order }
+            return order === -1 || activity.stopId !== action.stopId ? activity : { ...activity, order }
           }),
         },
       }
@@ -188,6 +220,29 @@ export function tripWiseReducer(state: TripWiseState, action: TripWiseAction): T
         },
         selectedTripId: action.trip.id,
       }
+    case 'HYDRATE_REMOTE': {
+      const selectedTripStillExists = action.trips.some((trip) => trip.id === state.selectedTripId)
+      const selectedTripId = selectedTripStillExists ? state.selectedTripId : action.trips[0]?.id || null
+      const firstDetail = action.details.find((detail) => detail.trip.id === selectedTripId)
+      return {
+        ...state,
+        db: {
+          ...state.db,
+          trips: action.trips,
+          cities: action.cities,
+          activities: action.activities,
+          tripStops: action.details.flatMap((detail) => detail.stops),
+          tripActivities: action.details.flatMap((detail) => detail.activities),
+          expenses: action.details.flatMap((detail) => detail.expenses),
+          sharedTrips: state.db.sharedTrips.filter((shared) => action.trips.some((trip) => trip.id === shared.tripId)),
+        },
+        selectedTripId,
+        selectedDayId: firstDetail?.trip.startDate || state.selectedDayId,
+        selectedActivityId: undefined,
+      }
+    }
+    case 'REPLACE_TRIP_DETAIL':
+      return replaceTripDetail(state, action.detail)
     default:
       return state
   }

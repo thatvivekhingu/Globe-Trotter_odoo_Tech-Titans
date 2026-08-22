@@ -2,10 +2,9 @@ import { BarChart3, Bell, Building2, CheckSquare, Compass, CreditCard, DollarSig
 import { useState, type FormEvent, type ReactNode } from 'react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { useTripWise } from '../../state/useTripWise'
+import { GlobeGuideChat } from '../ai/GlobeGuideChat'
 import { Button, IconButton } from '../ui/Button'
 import { ImageWithFallback } from '../ui/ImageWithFallback'
-import { AiCopilotFloatingChat } from '../ai/AiCopilotFloatingChat'
-
 import { LivePresenceBar } from '../collaboration/LivePresenceBar'
 
 const primaryNavigation = [
@@ -113,7 +112,7 @@ function TopBar({ onMenu }: { onMenu: () => void }) {
 
           <div className="hidden xl:flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200/60 text-[11px] font-semibold text-emerald-700">
             <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
-            Groq LLaMA Active
+            Gemini AI Active
           </div>
 
           <Button asChild size="sm" icon={<Plus size={14} />} className="hidden sm:inline-flex rounded-full">
@@ -152,7 +151,7 @@ function Sidebar() {
           <SidebarLink label="Dashboard" to="/dashboard" icon={LayoutDashboard} />
           <SidebarLink label="My Trips" to="/trips" icon={Map} />
           <SidebarLink label="Curated Tours" to="/packages" icon={Flame} badge="Hot" />
-          <SidebarLink label="AI Planner" to="/recommendations" icon={Sparkles} badge="LLaMA" />
+          <SidebarLink label="AI Planner" to="/recommendations" icon={Sparkles} badge="AI" />
         </div>
 
         {/* Bookings & Services */}
@@ -279,7 +278,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       </main>
       <MobileTabBar />
-      <AiCopilotFloatingChat />
+      <GlobeGuideChat />
     </div>
   )
 }

@@ -1,13 +1,34 @@
+"""AI endpoints — Tier 1 features (itinerary generator, chat, budget optimizer, discovery) and RAG recommendations."""
 import json
-import urllib.request
 import urllib.error
+import urllib.request
 from typing import Any
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
+from app.api.dependencies import get_current_user
 from app.core.config import settings
 from app.db.session import get_db
+from app.models import Trip, User
+from app.schemas.ai import (
+    BudgetOptimizerResponse,
+    ChatRequest,
+    ChatResponse,
+    DiscoveryRequest,
+    DiscoveryResponse,
+    ItineraryRequest,
+    ItineraryResponse,
+)
+from app.services.ai_service import (
+    analyse_budget,
+    chat_with_guide,
+    generate_itinerary,
+    recommend_destinations,
+)
 from app.services.rag import format_context, retrieve_travel_context
-from sqlalchemy.orm import Session
 
 router = APIRouter()
 
@@ -21,51 +42,121 @@ class RecommendationRequest(BaseModel):
     destination_type: str = Field(default='heritage')
 
 
-class ChatRequest(BaseModel):
+class RAGChatRequest(BaseModel):
     message: str
     trip_context: str | None = None
 
 
 def call_groq_llm(prompt: str, json_mode: bool = False) -> str | None:
-    api_key = settings.groq_api_key
+    api_key = getattr(settings, 'groq_api_key', '')
     if not api_key:
         return None
 
-    url = "https://api.groq.com/openai/v1/chat/completions"
+    url = 'https://api.groq.com/openai/v1/chat/completions'
     payload = {
-        "model": settings.groq_model,
-        "messages": [
-            {"role": "system", "content": "You are GlobeTrotter AI, an expert travel architect." + (" Output valid JSON only." if json_mode else "")},
-            {"role": "user", "content": prompt}
+        'model': getattr(settings, 'groq_model', 'openai/gpt-oss-120b'),
+        'messages': [
+            {
+                'role': 'system',
+                'content': 'You are GlobeTrotter AI, an expert travel architect.' + (' Output valid JSON only.' if json_mode else ''),
+            },
+            {'role': 'user', 'content': prompt},
         ],
-        "temperature": 0.6,
+        'temperature': 0.6,
     }
     if json_mode:
-        payload["response_format"] = {"type": "json_object"}
+        payload['response_format'] = {'type': 'json_object'}
 
     try:
         req = urllib.request.Request(
             url,
             data=json.dumps(payload).encode('utf-8'),
-            headers={
-                'Content-Type': 'application/json',
-                'Authorization': f'Bearer {api_key}'
-            }
+            headers={'Content-Type': 'application/json', 'Authorization': f'Bearer {api_key}'},
         )
         with urllib.request.urlopen(req, timeout=12) as response:
             res_data = json.loads(response.read().decode('utf-8'))
             return res_data['choices'][0]['message']['content']
     except Exception as e:
-        print(f"[Groq LLM Error] {e}")
+        print(f'[Groq LLM Error] {e}')
         return None
+
+
+@router.post('/itinerary', response_model=ItineraryResponse, status_code=status.HTTP_200_OK)
+def ai_generate_itinerary(
+    payload: ItineraryRequest,
+    _current_user: User = Depends(get_current_user),
+) -> ItineraryResponse:
+    """Generate a full day-by-day AI itinerary for any destination."""
+    try:
+        return generate_itinerary(payload)
+    except RuntimeError as exc:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f'AI service error: {exc}',
+        ) from exc
+
+
+@router.post('/chat', response_model=ChatResponse)
+def ai_chat(
+    payload: ChatRequest,
+    _current_user: User = Depends(get_current_user),
+) -> ChatResponse:
+    """Chat with Globe Guide, the AI travel assistant."""
+    try:
+        return chat_with_guide(payload)
+    except RuntimeError as exc:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f'AI service error: {exc}',
+        ) from exc
+
+
+@router.get('/budget/{trip_id}', response_model=BudgetOptimizerResponse)
+def ai_budget_insights(
+    trip_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> BudgetOptimizerResponse:
+    """Get AI-powered budget insights and saving recommendations for a trip."""
+    trip = db.scalar(select(Trip).where(Trip.id == trip_id, Trip.owner_user_id == current_user.id))
+    if trip is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Trip not found.')
+    try:
+        return analyse_budget(db, trip)
+    except RuntimeError as exc:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f'AI service error: {exc}',
+        ) from exc
+
+
+@router.post('/discover', response_model=DiscoveryResponse)
+def ai_discover_destinations(
+    payload: DiscoveryRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> DiscoveryResponse:
+    """Get AI-powered personalised destination recommendations."""
+    try:
+        return recommend_destinations(db, current_user.id, payload)
+    except RuntimeError as exc:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f'AI service error: {exc}',
+        ) from exc
 
 
 @router.post('/recommendations')
 def generate_recommendations(req: RecommendationRequest, db: Session = Depends(get_db)) -> dict[str, Any]:
-    """
-    Generate AI-powered, constraint-aware travel itineraries using Gemini 1.5 Flash
-    with robust deterministic fallback.
-    """
+    """Generate AI-powered, constraint-aware travel itineraries using grounded RAG data."""
     retrieved_context = format_context(retrieve_travel_context(db, f'{req.starting_city} {req.destination_type} {" ".join(req.interests)}'))
     prompt = f"""
 You are GlobeTrotter AI, an expert travel architect.
@@ -120,70 +211,67 @@ Return ONLY a valid JSON object (no markdown, no backticks) with this structure:
         except Exception:
             pass
 
-    # Deterministic fallback when API key is rate-limited or offline
     trans_budget = round(req.budget * 0.25)
     hotel_budget = round(req.budget * 0.40)
     act_budget = round(req.budget * 0.15)
     food_budget = round(req.budget * 0.15)
     other_budget = round(req.budget * 0.05)
 
-    dest_city = "Jaipur" if req.destination_type == "heritage" else "Goa" if req.destination_type == "coastal" else "Manali"
+    dest_city = 'Jaipur' if req.destination_type == 'heritage' else 'Goa' if req.destination_type == 'coastal' else 'Manali'
 
     return {
-        "tripName": f"{dest_city} Slow Escape ({req.days} Days)",
-        "summary": f"A carefully balanced {req.days}-day {req.travel_style} journey from {req.starting_city} exploring the beauty of {dest_city}.",
-        "suggestedCities": [dest_city],
-        "budgetBreakdown": {
-            "transportation": trans_budget,
-            "accommodation": hotel_budget,
-            "activities": act_budget,
-            "food": food_budget,
-            "other": other_budget
+        'tripName': f'{dest_city} Slow Escape ({req.days} Days)',
+        'summary': f'A carefully balanced {req.days}-day {req.travel_style} journey from {req.starting_city} exploring the beauty of {dest_city}.',
+        'suggestedCities': [dest_city],
+        'budgetBreakdown': {
+            'transportation': trans_budget,
+            'accommodation': hotel_budget,
+            'activities': act_budget,
+            'food': food_budget,
+            'other': other_budget,
         },
-        "days": [
+        'days': [
             {
-                "dayNumber": i + 1,
-                "city": dest_city,
-                "theme": f"Day {i + 1} Discovery & Exploration",
-                "activities": [
+                'dayNumber': i + 1,
+                'city': dest_city,
+                'theme': f'Day {i + 1} Discovery & Exploration',
+                'activities': [
                     {
-                        "name": f"Morning Anchor in {dest_city}",
-                        "category": "sightseeing",
-                        "time": "09:30",
-                        "cost": round(act_budget / req.days * 0.5),
-                        "duration": "2.5h"
+                        'name': f'Morning Anchor in {dest_city}',
+                        'category': 'sightseeing',
+                        'time': '09:30',
+                        'cost': round(act_budget / req.days * 0.5),
+                        'duration': '2.5h',
                     },
                     {
-                        "name": "Local Cuisine & Cultural Walk",
-                        "category": "food",
-                        "time": "14:00",
-                        "cost": round(food_budget / req.days * 0.4),
-                        "duration": "2h"
+                        'name': 'Local Cuisine & Cultural Walk',
+                        'category': 'food',
+                        'time': '14:00',
+                        'cost': round(food_budget / req.days * 0.4),
+                        'duration': '2h',
                     },
                     {
-                        "name": "Sunset Viewpoint & Leisure",
-                        "category": "nature",
-                        "time": "17:30",
-                        "cost": 0,
-                        "duration": "1.5h"
-                    }
-                ]
+                        'name': 'Sunset Viewpoint & Leisure',
+                        'category': 'nature',
+                        'time': '17:30',
+                        'cost': 0,
+                        'duration': '1.5h',
+                    },
+                ],
             }
             for i in range(req.days)
         ],
-        "proTips": [
-            "Book intercity rail or express trains 15 days in advance for best fares.",
-            "Carry a refillable water bottle and comfortable trail sneakers.",
-            "Check local museum opening hours as some are closed on Mondays."
-        ]
+        'proTips': [
+            'Book intercity rail or express trains 15 days in advance for best fares.',
+            'Carry a refillable water bottle and comfortable trail sneakers.',
+            'Check local museum opening hours as some are closed on Mondays.',
+        ],
     }
 
 
-@router.post('/chat')
-def chat_copilot(req: ChatRequest, db: Session = Depends(get_db)) -> dict[str, str | list[str]]:
-    """
-    AI Travel Copilot chat endpoint powered by Groq LLaMA / GPT-OSS 120B.
-    """
+@router.post('/copilot')
+def chat_copilot(req: RAGChatRequest, db: Session = Depends(get_db)) -> dict[str, str | list[str]]:
+    """AI Travel Copilot chat endpoint powered by RAG."""
     documents = retrieve_travel_context(db, f'{req.message} {req.trip_context or ""}')
     context = format_context(documents)
     prompt = f"""
@@ -204,4 +292,4 @@ Respond concisely and practically with friendly travel guidance in 2-3 short bul
             detail='AI provider is not configured or unavailable. Set GROQ_API_KEY on the backend.',
         )
 
-    return {"reply": reply, "sources": [document.source for document in documents]}
+    return {'reply': reply, 'sources': [document.source for document in documents]}

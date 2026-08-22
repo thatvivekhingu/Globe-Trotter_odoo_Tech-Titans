@@ -1,5 +1,12 @@
+import os
+import sys
 from contextlib import asynccontextmanager
 from collections.abc import AsyncIterator
+
+# Ensure backend root directory is in sys.path for direct execution
+backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if backend_dir not in sys.path:
+    sys.path.insert(0, backend_dir)
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -13,6 +20,7 @@ from app.db.base import Base
 from app.db.session import SessionLocal, engine
 from app.seed.reference import seed_reference_data
 from app import models  # noqa: F401 - imports register all SQLAlchemy models
+
 
 
 @asynccontextmanager
@@ -47,3 +55,8 @@ def health() -> dict[str, str]:
 
 
 app.include_router(api_router, prefix='/api/v1')
+
+if __name__ == '__main__':
+    import uvicorn
+    uvicorn.run('app.main:app', host='127.0.0.1', port=8000, reload=True)
+

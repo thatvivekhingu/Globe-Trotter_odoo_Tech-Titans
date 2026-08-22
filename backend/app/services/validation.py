@@ -8,7 +8,7 @@ from app.models import Activity, City, Trip, TripActivity, TripStop
 
 
 def raise_validation(message: str) -> None:
-    raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=message)
+    raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=message)
 
 
 def validate_range(start_date: date, end_date: date, label: str = 'date range') -> None:
@@ -27,6 +27,12 @@ def validate_stop_dates(trip: Trip, arrival_date: date, departure_date: date) ->
     validate_range(arrival_date, departure_date, 'stop date range')
     if arrival_date < trip.start_date or departure_date > trip.end_date:
         raise_validation('Stop dates must fall inside the parent trip dates.')
+
+
+def validate_stop_activity_dates(db: Session, stop_id: int, arrival_date: date, departure_date: date) -> None:
+    activities = db.scalars(select(TripActivity).where(TripActivity.trip_stop_id == stop_id)).all()
+    if any(activity.scheduled_date < arrival_date or activity.scheduled_date > departure_date for activity in activities):
+        raise_validation('Stop dates cannot exclude an existing activity.')
 
 
 def get_city_or_404(db: Session, city_id: int) -> City:

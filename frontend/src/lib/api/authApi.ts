@@ -24,14 +24,22 @@ export interface SignupInput {
 }
 
 export interface LoginInput {
-  email: string
+  user?: string
+  username?: string
+  email?: string
   password: string
 }
 
 export async function login(input: LoginInput) {
-  const response = await apiClient.post<AuthResponse>('/auth/login', input)
+  const payload = {
+    user: input.user || input.username || input.email,
+    email: input.email || input.user || input.username,
+    password: input.password,
+  }
+  const response = await apiClient.post<AuthResponse>('/auth/login', payload)
   return response.data
 }
+
 
 export async function signup(input: SignupInput) {
   const response = await apiClient.post<AuthResponse>('/auth/signup', input)

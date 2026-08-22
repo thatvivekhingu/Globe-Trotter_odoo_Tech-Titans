@@ -1,11 +1,13 @@
 import { ArrowRight, Compass, Ticket, Utensils } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
+import { getApiErrorMessage } from '../../lib/api/client'
 import { useTripWise } from '../../state/useTripWise'
 import { selectTrip, selectTripStops } from '../../state/selectors'
 import { formatCategoryLabel } from '../../lib/formatters'
+import { AiDestinationDiscovery } from '../../components/ai/AiDestinationDiscovery'
 import { Button } from '../../components/ui/Button'
-import { SectionHeading } from '../../components/ui/Card'
+import { Card, SectionHeading } from '../../components/ui/Card'
 import { EmptyState } from '../../components/ui/Feedback'
 import { DiscoveryToolbar } from './DiscoveryToolbar'
 import { CityResultCard } from './CityResultCard'
@@ -13,7 +15,7 @@ import { ActivityResultCard } from './ActivityResultCard'
 
 export function CitySearchPage() {
   const [params] = useSearchParams()
-  const { state, currentUser, dispatch, notify } = useTripWise()
+  const { state, currentUser, dispatch, commands, notify, remoteMode, remoteStatus } = useTripWise()
   const [query, setQuery] = useState(params.get('q') || '')
   const [country, setCountry] = useState('all')
   const [region, setRegion] = useState('all')
@@ -28,7 +30,11 @@ export function CitySearchPage() {
     return (!normalizedQuery || `${city.name} ${city.country} ${city.region}`.toLowerCase().includes(normalizedQuery)) && (country === 'all' || city.country === country) && (region === 'all' || city.region === region)
   }), [country, query, region, state.db.cities])
 
-  function addCity(cityId: string) {
+  async function addCity(cityId: string) {
+    if (remoteMode === 'remote' && remoteStatus !== 'ready') {
+      notify('Your travel workspace is still loading.', 'info')
+      return
+    }
     if (!selectedTrip) {
       notify('Create a trip before adding a destination.', 'info')
       return
@@ -37,8 +43,12 @@ export function CitySearchPage() {
       notify('That city is already on this route.', 'info')
       return
     }
-    dispatch({ type: 'ADD_STOP', stop: { id: `stop-${selectedTrip.id}-${cityId}`, tripId: selectedTrip.id, cityId, arrivalDate: selectedTrip.startDate, departureDate: selectedTrip.endDate, order: selectedStops.length } })
-    notify('City added to your route.')
+    try {
+      await commands.addStop(selectedTrip.id, { cityId, arrivalDate: selectedTrip.startDate, departureDate: selectedTrip.endDate })
+      notify('City added to your route.')
+    } catch (error) {
+      notify(getApiErrorMessage(error, 'We could not add that city to your route.'), 'error')
+    }
   }
 
   function toggleSaved(cityId: string) {
@@ -50,15 +60,19 @@ export function CitySearchPage() {
     <div className="space-y-8">
       <SectionHeading eyebrow="Find your next chapter" title="City discovery" description="Collect places that feel like a good beginning, then add them to the route you are shaping." action={<Link to="/discover/activities" className="inline-flex items-center gap-2 text-sm font-semibold text-clay hover:text-ink">Browse activities <ArrowRight size={16} /></Link>} />
       <DiscoveryToolbar query={query} onQueryChange={setQuery} queryPlaceholder="Search cities, regions, or countries" filters={[{ label: 'Country', value: country, onChange: setCountry, options: [{ value: 'all', label: 'All countries' }, ...countries.map((item) => ({ value: item, label: item }))] }, { label: 'Region', value: region, onChange: setRegion, options: [{ value: 'all', label: 'All regions' }, ...regions.map((item) => ({ value: item, label: item }))] }]} onReset={() => { setQuery(''); setCountry('all'); setRegion('all') }} hasFilters={Boolean(query || country !== 'all' || region !== 'all')} view={view} onViewChange={setView} />
-      <div className={view === 'grid' ? 'columns-1 gap-5 sm:columns-2 xl:columns-3' : 'grid gap-3 lg:grid-cols-2'}>{results.map((city) => <CityResultCard key={city.id} city={city} added={selectedStops.some((stop) => stop.cityId === city.id)} saved={savedIds.includes(city.id)} onAdd={() => addCity(city.id)} onToggleSaved={() => toggleSaved(city.id)} compact={view === 'list'} />)}</div>
+      <div className={view === 'grid' ? 'columns-1 gap-5 sm:columns-2 xl:columns-3' : 'grid gap-3 lg:grid-cols-2'} aria-busy={remoteMode === 'remote' && remoteStatus === 'loading'}>{results.map((city) => <CityResultCard key={city.id} city={city} added={selectedStops.some((stop) => stop.cityId === city.id)} saved={savedIds.includes(city.id)} onAdd={() => { void addCity(city.id) }} onToggleSaved={() => toggleSaved(city.id)} compact={view === 'list'} />)}</div>
       {!results.length ? <EmptyState icon={<Compass size={28} />} title="No destinations found" description="Try a different search or clear your filters. The best route can start with a surprising place." action={<Button variant="secondary" onClick={() => { setQuery(''); setCountry('all'); setRegion('all') }}>Clear filters</Button>} /> : null}
       <p className="sr-only">{results.length} destinations found.</p>
+      {/* AI Discovery section */}
+      <Card className="mt-4">
+        <AiDestinationDiscovery />
+      </Card>
     </div>
   )
 }
 
 export function ActivitySearchPage() {
-  const { state, dispatch, notify } = useTripWise()
+  const { state, commands, notify, remoteMode, remoteStatus } = useTripWise()
   const [query, setQuery] = useState('')
   const [cityId, setCityId] = useState('all')
   const [category, setCategory] = useState('all')
@@ -90,7 +104,11 @@ export function ActivitySearchPage() {
 
   const categories = [...new Set(state.db.activities.map((activity) => activity.category))]
 
-  function addActivity(activityId: string) {
+  async function addActivity(activityId: string) {
+    if (remoteMode === 'remote' && remoteStatus !== 'ready') {
+      notify('Your travel workspace is still loading.', 'info')
+      return
+    }
     if (!selectedTrip) {
       notify('Create a trip before adding an activity.', 'info')
       return
@@ -107,8 +125,12 @@ export function ActivitySearchPage() {
       notify('That activity is already in your itinerary.', 'info')
       return
     }
-    dispatch({ type: 'ADD_TRIP_ACTIVITY', activity: { id: `trip-activity-${selectedTrip.id}-${activityId}`, tripId: selectedTrip.id, stopId: stop.id, activityId, date: stop.arrivalDate, startTime: '10:00', durationMinutes: activity.durationMinutes, estimatedCost: activity.defaultCost, order: selectedTripActivities.length } })
-    notify('Activity added to your itinerary.')
+    try {
+      await commands.addActivity(selectedTrip.id, { stopId: stop.id, activityId, date: stop.arrivalDate, startTime: '10:00', durationMinutes: activity.durationMinutes, estimatedCost: activity.defaultCost })
+      notify('Activity added to your itinerary.')
+    } catch (error) {
+      notify(getApiErrorMessage(error, 'We could not add that activity to your itinerary.'), 'error')
+    }
   }
 
   const hasFilters = Boolean(query || cityId !== 'all' || category !== 'all' || costFilter !== 'all' || durationFilter !== 'all')
@@ -137,7 +159,7 @@ export function ActivitySearchPage() {
         onReset={resetFilters}
         hasFilters={hasFilters}
       />
-      <div className="columns-1 gap-5 sm:columns-2 xl:columns-3">{results.map((activity) => <ActivityResultCard key={activity.id} activity={activity} city={state.db.cities.find((city) => city.id === activity.cityId)} added={selectedTripActivities.some((item) => item.activityId === activity.id)} onAdd={() => addActivity(activity.id)} />)}</div>
+      <div className="columns-1 gap-5 sm:columns-2 xl:columns-3">{results.map((activity) => <ActivityResultCard key={activity.id} activity={activity} city={state.db.cities.find((city) => city.id === activity.cityId)} added={selectedTripActivities.some((item) => item.activityId === activity.id)} onAdd={() => { void addActivity(activity.id) }} />)}</div>
       {!results.length ? <EmptyState icon={<Utensils size={28} />} title="No activities found" description="Try adjusting your cost, category, or duration filters to see more options." action={<Button variant="secondary" onClick={resetFilters}>Clear filters</Button>} /> : null}
       <div className="rounded-card border border-clay/20 bg-clay/5 p-5 text-sm text-ink/65"><div className="flex items-start gap-3"><Ticket size={18} className="mt-0.5 shrink-0 text-clay" /><p><span className="font-semibold text-ink">A gentle rule of thumb:</span> plan one or two anchors per day, then leave some space for the places you find by accident.</p></div></div>
     </div>

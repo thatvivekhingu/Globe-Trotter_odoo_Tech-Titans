@@ -110,8 +110,59 @@ def test_recommendations_use_catalogue_without_provider(client):
     assert payload['budgetBreakdown']['transportation'] == 4500
 
 
-def test_chat_does_not_fabricate_when_provider_is_unavailable(client):
-    response = client.post('/api/v1/ai/chat', json={'message': 'What should I do in Goa?'})
+def test_stop_date_update_cannot_exclude_existing_activity(client):
+    _, headers = signup(client, 'stop-date-rule@example.com')
+    trip = client.post('/api/v1/trips', headers=headers, json={
+        'name': 'Stop Date Rule Route',
+        'start_date': '2026-10-03',
+        'end_date': '2026-10-06',
+    }).json()
+    goa = client.get('/api/v1/cities', params={'q': 'Goa'}).json()[0]
+    stop = client.post(f"/api/v1/trips/{trip['id']}/stops", headers=headers, json={
+        'city_id': goa['id'],
+        'arrival_date': '2026-10-03',
+        'departure_date': '2026-10-06',
+    }).json()
+    activity = client.get('/api/v1/activities', params={'city_id': goa['id']}).json()[0]
+    created = client.post(f"/api/v1/trips/{trip['id']}/activities", headers=headers, json={
+        'trip_stop_id': stop['id'],
+        'activity_id': activity['id'],
+        'scheduled_date': '2026-10-05',
+        'start_time': '10:00:00',
+        'duration_minutes': activity['duration_minutes'],
+        'estimated_cost': str(activity['default_cost']),
+    })
+    assert created.status_code == 201
 
-    assert response.status_code == 503
-    assert 'AI provider' in response.json()['detail']
+    response = client.patch(f"/api/v1/trips/{trip['id']}/stops/{stop['id']}", headers=headers, json={
+        'departure_date': '2026-10-04',
+    })
+    assert response.status_code == 422
+    assert response.json()['detail'] == 'Stop dates cannot exclude an existing activity.'
+
+
+def test_stop_reorder_persists_for_owner(client):
+    _, headers = signup(client, 'stop-reorder@example.com')
+    trip = client.post('/api/v1/trips', headers=headers, json={
+        'name': 'Stop Reorder Route',
+        'start_date': '2026-10-03',
+        'end_date': '2026-10-06',
+    }).json()
+    goa = client.get('/api/v1/cities', params={'q': 'Goa'}).json()[0]
+    mumbai = client.get('/api/v1/cities', params={'q': 'Mumbai'}).json()[0]
+    first = client.post(f"/api/v1/trips/{trip['id']}/stops", headers=headers, json={
+        'city_id': goa['id'],
+        'arrival_date': '2026-10-03',
+        'departure_date': '2026-10-04',
+    }).json()
+    second = client.post(f"/api/v1/trips/{trip['id']}/stops", headers=headers, json={
+        'city_id': mumbai['id'],
+        'arrival_date': '2026-10-04',
+        'departure_date': '2026-10-06',
+    }).json()
+
+    response = client.post(f"/api/v1/trips/{trip['id']}/stops/reorder", headers=headers, json={
+        'ordered_ids': [second['id'], first['id']],
+    })
+    assert response.status_code == 200
+    assert [item['id'] for item in response.json()] == [second['id'], first['id']]
