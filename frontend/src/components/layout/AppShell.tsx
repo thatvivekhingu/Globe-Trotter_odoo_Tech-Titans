@@ -19,7 +19,7 @@ const primaryNavigation = [
   { label: 'Odoo ERP Sync', to: '/odoo', icon: Building2, badge: 'Odoo' },
   { label: 'Analytics', to: '/analytics', icon: BarChart3 },
   { label: 'Discover', to: '/discover/cities', icon: Compass },
-  { label: 'Budget & Split', to: '/trips/trip-konkan/budget', icon: WalletCards },
+  { label: 'Budget & Split', to: '/trips/trip-goa-mmt/budget', icon: WalletCards },
   { label: 'Safety & Lingo', to: '/safety', icon: Shield },
   { label: 'Pricing & Plans', to: '/pricing', icon: CreditCard },
   { label: 'Packing & SOS', to: '/packing', icon: CheckSquare },

@@ -15,9 +15,14 @@ function createInitialState(): TripWiseState {
       try {
         const parsed = JSON.parse(stored) as TripWiseState
         if (parsed?.db?.trips?.length) {
-          // Always ensure the rich 30 Indian cities and activities are populated
-          parsed.db.cities = initialDb.cities
-          parsed.db.activities = initialDb.activities
+          // If old dataset is present, sync with latest rich MMT trips and database
+          const hasMmtTrip = parsed.db.trips.some(t => t.id === 'trip-goa-mmt')
+          if (!hasMmtTrip) {
+            parsed.db = initialDb
+          } else {
+            parsed.db.cities = initialDb.cities
+            parsed.db.activities = initialDb.activities
+          }
           return parsed
         }
       } catch {
@@ -29,7 +34,7 @@ function createInitialState(): TripWiseState {
   return {
     db: createInitialDb(),
     currentUserId: 'user-1',
-    selectedTripId: 'trip-konkan',
+    selectedTripId: 'trip-goa-mmt',
     activeCalendarView: 'calendar',
     selectedDayId: '2026-10-03',
     toast: null,

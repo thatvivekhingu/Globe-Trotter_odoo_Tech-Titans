@@ -27,15 +27,15 @@ interface TourPackage {
 
 const DESTINATION_TABS = [
   { id: 'all', label: 'All Tours', icon: '🌍' },
-  { id: 'rajasthan', label: 'Rajasthan', icon: '🏰', trending: true },
+  { id: 'goa', label: 'Goa', icon: '🏖️', trending: true },
   { id: 'kashmir', label: 'Kashmir', icon: '❄️', trending: true },
-  { id: 'ladakh', label: 'Ladakh', icon: '🏔️' },
+  { id: 'rajasthan', label: 'Rajasthan', icon: '🏰', trending: true },
+  { id: 'dubai', label: 'Dubai', icon: '🏙️', trending: true },
   { id: 'kerala', label: 'Kerala', icon: '🛶' },
+  { id: 'ladakh', label: 'Ladakh', icon: '🏔️' },
+  { id: 'andaman', label: 'Andaman', icon: '🐠' },
   { id: 'bali', label: 'Bali', icon: '🌴' },
-  { id: 'thailand', label: 'Thailand', icon: '🛕' },
-  { id: 'vietnam', label: 'Vietnam', icon: '🏮' },
   { id: 'europe', label: 'Europe', icon: '🗼' },
-  { id: 'spiti', label: 'Spiti Valley', icon: '⛰️' },
 ]
 
 const TOUR_PACKAGES: TourPackage[] = [
@@ -138,6 +138,56 @@ const TOUR_PACKAGES: TourPackage[] = [
     highlights: ['Private Alleppey Houseboat Cruise', 'Munnar Eravikulam Tea Estate', 'Periyar Wildlife Sanctuary'],
     inclusions: ['Private Air-conditioned Houseboat', 'Resorts in Munnar', 'Traditional Kerala Meals', 'Chauffeur Driven AC Cab'],
   },
+  {
+    id: 'tour-7',
+    title: 'Goa Premium Beach Getaway: Mandovi Cruise & Water Sports',
+    destination: 'Calangute - Baga - Candolim - Mandovi River',
+    region: 'Beaches',
+    duration: '4 Days / 3 Nights',
+    daysCount: 4,
+    imageUrl: 'https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?auto=format&fit=crop&w=800&q=80',
+    rating: 4.9,
+    reviewsCount: 2450,
+    originalPrice: 28000,
+    discountPrice: 16999,
+    savingsAmount: 11001,
+    highlights: ['Grand Island Scuba Dive', 'Big Daddy Casino Mandovi Pass', 'Baga Beach Candlelight Dinner'],
+    inclusions: ['4-Star Candolim Beach Resort', 'Airport Transfers in AC Cab', 'Buffet Breakfast', 'Complimentary Scuba Video'],
+    trending: true,
+  },
+  {
+    id: 'tour-8',
+    title: 'Dubai Dazzle: Burj Khalifa 124th Floor & Red Dunes Safari',
+    destination: 'Downtown Dubai - Palm Jumeirah - Dubai Marina',
+    region: 'International',
+    duration: '5 Days / 4 Nights',
+    daysCount: 5,
+    imageUrl: 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=800&q=80',
+    rating: 4.93,
+    reviewsCount: 3890,
+    originalPrice: 72000,
+    discountPrice: 44500,
+    savingsAmount: 27500,
+    highlights: ['Burj Khalifa At The Top Access', '4x4 Desert Safari with Live BBQ & Fire Show', 'Marina Dhow Luxury Cruise Dinner'],
+    inclusions: ['4-Star City Center Hotel', 'UAE Tourist Visa Assistance', 'All Sightseeing in AC Coach', 'Daily Breakfast'],
+    trending: true,
+  },
+  {
+    id: 'tour-9',
+    title: 'Andaman Island Paradise: Radhanagar Beach & Coral Reefs',
+    destination: 'Port Blair - Havelock Island - Neil Island',
+    region: 'Beaches',
+    duration: '6 Days / 5 Nights',
+    daysCount: 6,
+    imageUrl: 'https://images.unsplash.com/photo-1589308078059-be1415eab4c3?auto=format&fit=crop&w=800&q=80',
+    rating: 4.96,
+    reviewsCount: 1720,
+    originalPrice: 52000,
+    discountPrice: 31800,
+    savingsAmount: 20200,
+    highlights: ['Radhanagar Beach Sunset', 'Elephant Beach Sea Walk & Snorkeling', 'Makruzz Premium Cruise Transfers'],
+    inclusions: ['Beachside Boutique Resorts', 'Private AC Vehicle for all transfers', 'Inter-Island Catamaran Ferry', 'Daily Breakfast & Dinner'],
+  },
 ]
 
 export function TourPackagesPage() {
@@ -162,9 +212,12 @@ export function TourPackagesPage() {
 
   const filteredTours = TOUR_PACKAGES.filter((p) => {
     if (activeTab === 'all') return true
+    if (activeTab === 'goa') return p.destination.toLowerCase().includes('goa') || p.title.toLowerCase().includes('goa')
     if (activeTab === 'rajasthan') return p.destination.toLowerCase().includes('rajasthan') || p.title.toLowerCase().includes('rajasthan')
     if (activeTab === 'kashmir') return p.destination.toLowerCase().includes('kashmir') || p.title.toLowerCase().includes('kashmir')
+    if (activeTab === 'dubai') return p.destination.toLowerCase().includes('dubai') || p.title.toLowerCase().includes('dubai')
     if (activeTab === 'ladakh') return p.destination.toLowerCase().includes('ladakh') || p.title.toLowerCase().includes('leh')
+    if (activeTab === 'andaman') return p.destination.toLowerCase().includes('andaman') || p.destination.toLowerCase().includes('havelock') || p.title.toLowerCase().includes('andaman')
     if (activeTab === 'kerala') return p.destination.toLowerCase().includes('kerala') || p.destination.toLowerCase().includes('munnar')
     if (activeTab === 'bali') return p.destination.toLowerCase().includes('bali')
     if (activeTab === 'europe') return p.region === 'Europe'
