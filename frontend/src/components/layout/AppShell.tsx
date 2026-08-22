@@ -1,4 +1,4 @@
-import { BarChart3, Bell, Building2, CheckSquare, Compass, CreditCard, DollarSign, Globe, LayoutDashboard, Map, Menu, Plane, Plus, Search, Settings, Shield, Sparkles, UserCircle, WalletCards } from 'lucide-react'
+import { BarChart3, Bell, Building2, CheckSquare, Compass, CreditCard, DollarSign, Flame, Globe, LayoutDashboard, Map, Menu, Plane, Plus, Search, Settings, Shield, Sparkles, UserCircle, WalletCards } from 'lucide-react'
 import { useState, type FormEvent, type ReactNode } from 'react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { useTripWise } from '../../state/useTripWise'
@@ -11,6 +11,7 @@ import { LivePresenceBar } from '../collaboration/LivePresenceBar'
 const primaryNavigation = [
   { label: 'Dashboard', to: '/dashboard', icon: LayoutDashboard },
   { label: 'My Trips', to: '/trips', icon: Map },
+  { label: 'Curated Tours', to: '/packages', icon: Flame, badge: 'Hot' },
   { label: 'AI Planner', to: '/recommendations', icon: Sparkles, badge: 'LLaMA' },
   { label: 'Bookings', to: '/booking', icon: Plane, badge: 'Live' },
   { label: 'Visa Services', to: '/visa', icon: Globe, badge: '120+' },
