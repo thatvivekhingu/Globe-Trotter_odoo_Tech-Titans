@@ -65,7 +65,7 @@ function SidebarLink({ label, to, icon: Icon, badge }: { label: string; to: stri
 
 function TopBar({ onMenu }: { onMenu: () => void }) {
   const navigate = useNavigate()
-  const { currentUser } = useTripWise()
+  const { currentUser, remoteMode, remoteStatus } = useTripWise()
   const [query, setQuery] = useState('')
 
   function handleSearch(event: FormEvent<HTMLFormElement>) {
@@ -73,14 +73,16 @@ function TopBar({ onMenu }: { onMenu: () => void }) {
     navigate(`/discover/cities${query.trim() ? `?q=${encodeURIComponent(query.trim())}` : ''}`)
   }
 
+  const isLive = remoteMode === 'remote' && remoteStatus === 'ready'
+
   return (
     <header className="sticky top-0 z-30 border-b border-slate-200/80 bg-white/85 backdrop-blur-md">
       <div className="flex h-16 items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
         <div className="flex items-center gap-3">
-          <IconButton label="Open navigation" size="sm" className="lg:hidden" onClick={onMenu}>
+          <IconButton label="Open navigation menu" size="sm" className="lg:hidden" onClick={onMenu}>
             <Menu size={18} />
           </IconButton>
-          <NavLink to="/dashboard" className="flex items-center gap-2.5 group">
+          <NavLink to="/dashboard" aria-label="GlobeTrotter Home" className="flex items-center gap-2.5 group">
             <div className="size-9 rounded-xl bg-[#0F172A] text-[#B4F056] flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform">
               <Globe size={20} />
             </div>
@@ -91,12 +93,13 @@ function TopBar({ onMenu }: { onMenu: () => void }) {
         </div>
 
         {/* Global Search Bar */}
-        <form onSubmit={handleSearch} className="hidden max-w-md flex-1 md:block">
+        <form onSubmit={handleSearch} role="search" className="hidden max-w-md flex-1 md:block">
           <label className="group flex h-10 items-center gap-2.5 rounded-full border border-slate-200 bg-slate-50/80 px-4 text-xs text-slate-500 focus-within:border-slate-800 focus-within:bg-white focus-within:ring-2 focus-within:ring-slate-800/10 transition-all">
             <Search size={15} className="text-slate-400 group-focus-within:text-slate-800" />
             <input
               value={query}
               onChange={(event) => setQuery(event.target.value)}
+              aria-label="Search destinations, beaches, activities"
               className="min-w-0 flex-1 bg-transparent text-xs text-slate-900 outline-none placeholder:text-slate-400"
               placeholder="Search destinations, beaches, activities..."
             />
@@ -110,9 +113,17 @@ function TopBar({ onMenu }: { onMenu: () => void }) {
         <div className="flex items-center gap-3">
           <LivePresenceBar />
 
-          <div className="hidden xl:flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200/60 text-[11px] font-semibold text-emerald-700">
-            <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
-            Gemini AI Active
+          {/* Dynamic Network & API Sync Badge */}
+          <div
+            title={isLive ? 'Connected to FastAPI & Odoo Live Services' : 'Running in Local State & Offline Cache Mode'}
+            className={`hidden md:flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold border transition-colors ${
+              isLive
+                ? 'bg-emerald-50 border-emerald-200/60 text-emerald-700'
+                : 'bg-indigo-50 border-indigo-200/60 text-indigo-700'
+            }`}
+          >
+            <span className={`size-2 rounded-full ${isLive ? 'bg-emerald-500 animate-pulse' : 'bg-indigo-500'}`} />
+            {isLive ? 'Live Sync Active' : 'Local Cache Mode'}
           </div>
 
           <Button asChild size="sm" icon={<Plus size={14} />} className="hidden sm:inline-flex rounded-full">
@@ -124,7 +135,7 @@ function TopBar({ onMenu }: { onMenu: () => void }) {
             <span className="absolute top-1.5 right-1.5 size-2 rounded-full bg-[#4F46E5]" />
           </IconButton>
 
-          <NavLink to="/profile" className="flex items-center gap-2 rounded-full p-0.5 hover:ring-2 hover:ring-slate-200 transition-all">
+          <NavLink to="/profile" aria-label="User Profile" className="flex items-center gap-2 rounded-full p-0.5 hover:ring-2 hover:ring-slate-200 transition-all">
             <ImageWithFallback
               src={currentUser?.avatarUrl}
               alt="Profile portrait"

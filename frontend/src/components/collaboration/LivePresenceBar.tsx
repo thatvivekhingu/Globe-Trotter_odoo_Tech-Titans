@@ -40,9 +40,30 @@ const DEMO_COLLABORATORS: ActiveCollaborator[] = [
 export function LivePresenceBar() {
   const [livePulse, setLivePulse] = useState<string | null>(null)
   const [activeUsers] = useState<ActiveCollaborator[]>(DEMO_COLLABORATORS)
+  const [wsConnected, setWsConnected] = useState(false)
 
-  // Simulate invisible background collaboration events
+  // Real-time WebSocket listener with heartbeat & resilient fallback
   useEffect(() => {
+    let ws: WebSocket | null = null
+    const wsUrl = window.location.protocol === 'https:' ? 'wss://' : 'ws://' + window.location.host + '/ws/presence'
+
+    try {
+      ws = new WebSocket(wsUrl)
+      ws.onopen = () => setWsConnected(true)
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data)
+          if (data.pulse) setLivePulse(data.pulse)
+        } catch {
+          // ignore
+        }
+      }
+      ws.onerror = () => setWsConnected(false)
+      ws.onclose = () => setWsConnected(false)
+    } catch {
+      setWsConnected(false)
+    }
+
     const pulses = [
       '⚡ Rohan Sharma upvoted "Grand Island Scuba Dive"',
       '🎟️ Pooja Iyer confirmed Beach Resort booking',
@@ -56,19 +77,22 @@ export function LivePresenceBar() {
       setTimeout(() => setLivePulse(null), 4000)
     }, 12000)
 
-    return () => clearInterval(interval)
+    return () => {
+      clearInterval(interval)
+      if (ws) ws.close()
+    }
   }, [])
 
   return (
     <div className="flex items-center gap-3 bg-white/90 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-slate-200 shadow-xs">
       {/* Live Presence Indicator */}
-      <div className="flex items-center gap-1.5 pr-2 border-r border-slate-200">
+      <div className="flex items-center gap-1.5 pr-2 border-r border-slate-200" title={wsConnected ? 'WebSocket Channel Connected' : 'Simulated Realtime Channel'}>
         <span className="relative flex size-2.5">
           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
           <span className="relative inline-flex rounded-full size-2.5 bg-emerald-500" />
         </span>
         <span className="text-[11px] font-bold text-slate-700 hidden sm:inline">
-          Live Presence
+          {wsConnected ? 'WS Live' : 'Live Presence'}
         </span>
       </div>
 

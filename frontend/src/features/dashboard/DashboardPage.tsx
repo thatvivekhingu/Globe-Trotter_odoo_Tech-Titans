@@ -1,4 +1,4 @@
-import { ArrowUpRight, Calendar, CalendarDays, ChevronRight, Compass, MapPin, Plus, Sparkles, TrendingUp, WalletCards } from 'lucide-react'
+import { ArrowUpRight, Calendar, CalendarDays, ChevronRight, MapPin, Plus, Sparkles, TrendingUp, WalletCards } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useDashboardData } from '../../hooks/useTripSelectors'
 import { useTripWise } from '../../state/useTripWise'
