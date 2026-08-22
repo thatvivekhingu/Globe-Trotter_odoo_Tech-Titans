@@ -236,6 +236,27 @@ export function TourPackagesPage() {
 
   return (
     <div className="space-y-10">
+      {/* Competitor Crusher Banner vs MakeMyTrip */}
+      <div className="bg-[#0F172A] text-white py-3 px-5 rounded-2xl flex flex-wrap items-center justify-between gap-4 shadow-lg border border-slate-800">
+        <div className="flex items-center gap-3">
+          <div className="size-9 rounded-xl bg-[#B4F056] text-[#0F172A] flex items-center justify-center font-black text-xs shrink-0">
+            ₹0
+          </div>
+          <div>
+            <p className="text-xs font-extrabold text-white flex items-center gap-2">
+              MakeMyTrip Price Match & ₹0 Convenience Fee Guarantee!
+              <span className="bg-emerald-500 text-white text-[9px] px-2 py-0.5 rounded-full font-bold uppercase">Beat MMT</span>
+            </p>
+            <p className="text-[11px] text-slate-300 mt-0.5">
+              Zero convenience fees, 100% price match guarantee, and 1-click AI customization on all tours.
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2 text-xs font-bold text-[#B4F056]">
+          <span>Save ~₹500 per booking vs MMT</span>
+        </div>
+      </div>
+
       {/* 1. Thrillophilia-Style Monsoon Sale Banner */}
       <div className="bg-linear-to-r from-[#0052D4] via-[#4364F7] to-[#6FB1FC] text-white py-2.5 px-4 rounded-2xl flex flex-wrap items-center justify-between gap-3 shadow-md">
         <div className="flex items-center gap-2 text-xs sm:text-sm font-bold">
