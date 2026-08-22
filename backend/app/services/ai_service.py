@@ -10,6 +10,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.ai_client import get_gemini_model
+from app.core.cache import ai_cache
 from app.models import City, Expense, Trip, TripActivity, TripStop
 from app.schemas.ai import (
     BudgetInsight,
@@ -44,7 +45,13 @@ def _days_count(start: date, end: date) -> int:
 # ─── 1. Itinerary Generator ───────────────────────────────────────────────────
 
 def generate_itinerary(request: ItineraryRequest) -> ItineraryResponse:
+    cache_key = f"itinerary:{request.destination.lower()}:{request.start_date}:{request.end_date}:{request.travel_style}:{','.join(request.interests)}"
+    cached_val = ai_cache.get(cache_key)
+    if cached_val:
+        return ItineraryResponse(**cached_val)
+
     days = _days_count(request.start_date, request.end_date)
+
     interests_str = ', '.join(request.interests) if request.interests else 'general tourism'
     budget_str = f'{request.currency} {request.budget}' if request.budget else 'flexible'
 
@@ -96,7 +103,7 @@ Generate exactly {days} days starting from {request.start_date}."""
     data = json.loads(raw)
 
     # Build validated response
-    return ItineraryResponse(
+    res = ItineraryResponse(
         destination=data['destination'],
         summary=data['summary'],
         total_days=data['total_days'],
@@ -126,6 +133,9 @@ Generate exactly {days} days starting from {request.start_date}."""
             for day in data['days']
         ],
     )
+    ai_cache.set(cache_key, res.model_dump())
+    return res
+
 
 
 # ─── 2. Chat (Globe Guide) ────────────────────────────────────────────────────

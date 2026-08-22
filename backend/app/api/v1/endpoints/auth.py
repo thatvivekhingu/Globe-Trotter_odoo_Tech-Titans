@@ -33,7 +33,8 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)) -> TokenResponse
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail='User identifier is required.')
     user = db.scalar(select(User).where((User.email == identifier) | (User.email.like(f"{identifier}@%"))))
     if user is None or not verify_password(payload.password, user.password_hash):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Invalid user or password.', headers={'WWW-Authenticate': 'Bearer'})
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Invalid email or password.', headers={'WWW-Authenticate': 'Bearer'})
+
     return TokenResponse(access_token=create_access_token(user.id), user=UserRead.model_validate(user))
 
 
