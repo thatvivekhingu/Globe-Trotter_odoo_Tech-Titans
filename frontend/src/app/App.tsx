@@ -20,6 +20,8 @@ import { SmartRecommendationPage } from '../features/ai/SmartRecommendationPage'
 import { SmartPackingPage } from '../features/tools/SmartPackingPage'
 import { SafetyAndLanguagePage } from '../features/tools/SafetyAndLanguagePage'
 import { AnalyticsReportsPage } from '../features/analytics/AnalyticsReportsPage'
+import { OdooIntegrationPage } from '../features/odoo/OdooIntegrationPage'
+import { PricingPage } from '../features/pricing/PricingPage'
 import { BookingPage } from '../features/booking/BookingPage'
 import { Card } from '../components/ui/Card'
 import { Button } from '../components/ui/Button'
@@ -79,6 +81,8 @@ function AppRoutes() {
           <Route path="/safety" element={<SafetyAndLanguagePage />} />
           <Route path="/analytics" element={<AnalyticsReportsPage />} />
           <Route path="/reports" element={<AnalyticsReportsPage />} />
+          <Route path="/odoo" element={<OdooIntegrationPage />} />
+          <Route path="/pricing" element={<PricingPage />} />
           <Route path="/packing" element={<SmartPackingPage />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/settings" element={<SettingsPage />} />
