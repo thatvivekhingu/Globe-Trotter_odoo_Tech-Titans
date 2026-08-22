@@ -1,0 +1,1 @@
+"""TripWise FastAPI application package."""
